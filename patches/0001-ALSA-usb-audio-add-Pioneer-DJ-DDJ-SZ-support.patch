@@ -1,0 +1,160 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: PLACEHOLDER_NAME <PLACEHOLDER_EMAIL>
+Date: Thu, 1 Jan 1970 00:00:00 +0000
+Subject: [PATCH] ALSA: usb-audio: add Pioneer DJ DDJ-SZ support
+
+The Pioneer DJ DDJ-SZ exposes its audio interface as USB vendor-specific
+class (0xFF) rather than USB Audio Class, so it needs a quirks-table
+entry like its sibling Pioneer devices (DJM-750, DJM-850, DJM-900NXS2,
+DJM-450, DJM-V10) already have.
+
+The device presents 10 channels of S24_3LE audio in both directions,
+fixed at 44.1kHz, on interface 0 altsetting 1: playback on endpoint
+0x01, capture on endpoint 0x82. Playback channels 0/1 are Master L/R;
+capture channels 8/9 are the mic input. Channels 2-7 in both directions
+are not yet mapped to specific physical ins/outs.
+
+Activation reuses the existing pioneer_djm_set_format_quirk() used by
+the DJM-750/850/900NXS2/450/V10 (SET_INTERFACE to altsetting 1, then a
+UAC-shaped SET_CUR sample-rate control transfer) with this device's own
+captured wIndex (0x0082). Unlike those devices, the DDJ-SZ additionally
+needs a one-time vendor "arm" sequence before its capture path produces
+real audio -- without it, capture opens and runs with no USB/ALSA errors
+but delivers silence (a hard zero on every channel) rather than any
+error, so this is easy to miss. The arm sequence is six vendor control
+transfers (bmRequestType=0x40, bRequest=3, varying wValue/wIndex, each
+followed by a bmRequestType=0xc0, bRequest=0 status read), replicated
+byte-for-byte from a USB capture of the official Windows driver.
+
+All of the above -- endpoint numbers, format, channel mapping, and the
+arm sequence bytes -- were determined by capturing and decoding real USB
+traffic from the Windows driver (USBPcap + Wireshark) during
+enumeration, playback, and mic recording, then verifying the format
+hypothesis against actual de-interleaved payload data rather than
+packet-size arithmetic alone. Both playback and capture have been
+verified working with real audio, not just clean enumeration.
+
+Signed-off-by: PLACEHOLDER_NAME <PLACEHOLDER_EMAIL>
+---
+ sound/usb/quirks-table.h | 49 +++++++++++++++++++++++++++++++++++++++++++++
+ sound/usb/quirks.c       | 38 +++++++++++++++++++++++++++++++++++
+ 2 files changed, 87 insertions(+)
+
+diff --git a/sound/usb/quirks-table.h b/sound/usb/quirks-table.h
+index eafc0d73c..30337e418 100644
+--- a/sound/usb/quirks-table.h
++++ b/sound/usb/quirks-table.h
+@@ -3368,6 +3368,55 @@ YAMAHA_DEVICE(0x7010, "UB99"),
+ 		}
+ 	}
+ },
++{
++	/*
++	 * PIONEER DJ DDJ-SZ
++	 * PCM is 10 channels out, 10 channels in @ 44.1 fixed, S24_3LE
++	 * interface 0, vendor class alt setting 1
++	 * Playback on EP 0x01, Capture on EP 0x82
++	 */
++	USB_DEVICE_VENDOR_SPEC(0x08e4, 0x0191),
++	QUIRK_DRIVER_INFO {
++		QUIRK_DATA_COMPOSITE {
++			{
++				QUIRK_DATA_AUDIOFORMAT(0) {
++					.formats = SNDRV_PCM_FMTBIT_S24_3LE,
++					.channels = 10,
++					.iface = 0,
++					.altsetting = 1,
++					.altset_idx = 1,
++					.endpoint = 0x01,
++					.ep_attr = USB_ENDPOINT_XFER_ISOC|
++						   USB_ENDPOINT_SYNC_ASYNC,
++					.rates = SNDRV_PCM_RATE_44100,
++					.rate_min = 44100,
++					.rate_max = 44100,
++					.nr_rates = 1,
++					.rate_table = (unsigned int[]) { 44100 }
++				}
++			},
++			{
++				QUIRK_DATA_AUDIOFORMAT(0) {
++					.formats = SNDRV_PCM_FMTBIT_S24_3LE,
++					.channels = 10,
++					.iface = 0,
++					.altsetting = 1,
++					.altset_idx = 1,
++					.endpoint = 0x82,
++					.ep_idx = 1,
++					.ep_attr = USB_ENDPOINT_XFER_ISOC|
++						   USB_ENDPOINT_SYNC_ASYNC,
++					.rates = SNDRV_PCM_RATE_44100,
++					.rate_min = 44100,
++					.rate_max = 44100,
++					.nr_rates = 1,
++					.rate_table = (unsigned int[]) { 44100 }
++				}
++			},
++			QUIRK_COMPOSITE_END
++		}
++	}
++},
+ {
+ 	/*
+ 	 * Pioneer DJ DJM-750MK2
+diff --git a/sound/usb/quirks.c b/sound/usb/quirks.c
+index b993037ac..3632133cb 100644
+--- a/sound/usb/quirks.c
++++ b/sound/usb/quirks.c
+@@ -1764,6 +1764,40 @@ static void set_format_emu_quirk(struct snd_usb_substream *subs,
+ 	subs->pkt_offset_adj = (emu_samplerate_id >= EMU_QUIRK_SR_176400HZ) ? 4 : 0;
+ }
+
++/*
++ * The DDJ-SZ needs a one-time vendor "arm" sequence before its capture
++ * path produces real audio, replicated byte-for-byte from a USB capture
++ * of the Windows driver. Each write is bmRequestType=0x40, bRequest=3,
++ * followed by a bmRequestType=0xc0, bRequest=0 status read; the read
++ * content is a fixed status value regardless of what was written, but
++ * we replicate it anyway since it's unclear if the device requires the
++ * read to actually process the preceding write.
++ */
++static void ddj_sz_arm_quirk(struct usb_device *dev)
++{
++	static const struct {
++		u16 value;
++		u16 index;
++		u8 read_len;
++	} cmds[] = {
++		{ 0x0100, 0x8002, 6 },
++		{ 0x0200, 0x8002, 6 },
++		{ 0x0303, 0x8002, 6 },
++		{ 0x0403, 0x8002, 6 },
++		{ 0x050a, 0x8002, 6 },
++		{ 0x0000, 0x8003, 2 },
++	};
++	u8 buf[6];
++	unsigned int i;
++
++	for (i = 0; i < ARRAY_SIZE(cmds); i++) {
++		snd_usb_ctl_msg(dev, usb_sndctrlpipe(dev, 0),
++			3, 0x40, cmds[i].value, cmds[i].index, NULL, 0);
++		snd_usb_ctl_msg(dev, usb_rcvctrlpipe(dev, 0),
++			0, 0xc0, 0x0000, cmds[i].index, buf, cmds[i].read_len);
++	}
++}
++
+ static int pioneer_djm_set_format_quirk(struct snd_usb_substream *subs,
+ 					u16 windex)
+ {
+@@ -1876,6 +1910,10 @@ void snd_usb_set_format_quirk(struct snd_usb_substream *subs,
+ 	case USB_ID(0x08e4, 0x0163): /* Pioneer DJM-850 */
+ 		pioneer_djm_set_format_quirk(subs, 0x0086);
+ 		break;
++	case USB_ID(0x08e4, 0x0191): /* Pioneer DDJ-SZ */
++		ddj_sz_arm_quirk(subs->dev);
++		pioneer_djm_set_format_quirk(subs, 0x0082);
++		break;
+ 	case USB_ID(0x0dba, 0x5000):
+ 		mbox3_set_format_quirk(subs, fmt); /* Digidesign Mbox 3 */
+ 		break;
+--
+2.45.0
