@@ -57,6 +57,8 @@ aplay -l ; arecord -l                                  # look for "DDJSZ" / "DDJ
 speaker-test -D hw:X,0 -c 10 -r 44100 -F S24_3LE -l 1   # X = card number from aplay -l
 arecord -D hw:X,0 -c 10 -f S24_3LE -r 44100 test.wav    # talk into the mic; ch8/9 should show signal
 ```
+(`speaker-test -s N` picks a single channel — see
+[Confirmed channel map](#confirmed-channel-map) below for what each pair is.)
 
 `speaker-test`'s default `-t wav` mode is hardcoded to 48kHz/S16_LE and will
 fail against this device regardless of `-F`/`-r` — leave it out, as above.
@@ -80,11 +82,38 @@ ARCH=<your arch> LOCALVERSION= make M=sound/usb
 The `LOCALVERSION=` (empty, but explicitly set) matters — see
 [Troubleshooting](#troubleshooting) below.
 
+## Confirmed channel map
+
+Figured out empirically (feeding a test tone into each pair with
+`speaker-test -c 10 -s N` and watching which deck/output lit up on the
+hardware), since Pioneer's manual doesn't document USB channel numbers and
+this isn't a single pre-mixed stereo device — the DDJ-SZ sends each deck's
+**raw, pre-fader** signal over USB and does the actual channel fader / EQ /
+crossfader mixing itself, in analog, on the hardware:
+
+| Channels (0-indexed) | Direction | Carries |
+|---|---|---|
+| 0-1 | playback | Deck / Channel 1 (raw, pre-fader) |
+| 2-3 | playback | Deck / Channel 2 (raw, pre-fader) |
+| 4-5 | playback | Deck / Channel 3 (raw, pre-fader) |
+| 6-7 | playback | Deck / Channel 4 (raw, pre-fader) |
+| 8-9 | playback | Booth output |
+| 8-9 | capture | Mic |
+
+Master output isn't a USB channel at all — it's computed and output purely
+in analog by the onboard mixer from channels 0-7, so there's nothing to
+assign it to in software. The same is true for headphone cue: with all 10
+channels already accounted for (4 decks + Booth), there's no channel left
+for a software-computed headphone/cue send, so genuine per-channel and
+master cue monitoring appears to be handled entirely inside the hardware
+too — don't assign anything to "Headphones" in your DJ software's sound
+routing for this device, it has nowhere valid to go and will end up on
+whatever Booth Out is physically connected to instead.
+
+Channels 2-7 were previously unconfirmed; this table supersedes that.
+
 ## Known limitations
 
-- **Channels 2–7** (both directions) aren't mapped to specific physical
-  ins/outs — only Master L/R (playback ch0/1) and Mic (capture ch8/9) are
-  confirmed. Not required for basic use; PRs welcome if you isolate them.
 - **Simultaneous playback + capture** hasn't been tested. ALSA auto-detects
   implicit feedback between the OUT and IN endpoints on this device even
   though the quirk table doesn't request it — if running both together
