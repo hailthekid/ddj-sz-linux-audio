@@ -86,19 +86,33 @@ The `LOCALVERSION=` (empty, but explicitly set) matters — see
 
 Figured out empirically (feeding a test tone into each pair with
 `speaker-test -c 10 -s N` and watching which deck/output lit up on the
-hardware), since Pioneer's manual doesn't document USB channel numbers and
-this isn't a single pre-mixed stereo device — the DDJ-SZ sends each deck's
-**raw, pre-fader** signal over USB and does the actual channel fader / EQ /
-crossfader mixing itself, in analog, on the hardware:
+hardware), since Pioneer's manual doesn't document USB channel numbers.
+Playback and capture are separate directions, so the same channel number
+means different things depending on which way the audio is going.
 
-| Channels (0-indexed) | Direction | Carries |
-|---|---|---|
-| 0-1 | playback | Deck / Channel 1 (raw, pre-fader) |
-| 2-3 | playback | Deck / Channel 2 (raw, pre-fader) |
-| 4-5 | playback | Deck / Channel 3 (raw, pre-fader) |
-| 6-7 | playback | Deck / Channel 4 (raw, pre-fader) |
-| 8-9 | playback | Booth output |
-| 8-9 | capture | Mic |
+**Playback** (host → device). This isn't a single pre-mixed stereo device:
+each pair feeds one physical channel strip on the DDJ-SZ, which then applies
+its own analog trim / EQ / fader / crossfader to it.
+
+| Channels (0-indexed) | Feeds |
+|---|---|
+| 0-1 | Channel strip 1 (Deck 1) |
+| 2-3 | Channel strip 2 (Deck 2) |
+| 4-5 | Channel strip 3 (Deck 3) |
+| 6-7 | Channel strip 4 (Deck 4) |
+| 8-9 | Booth output |
+
+**Capture** (device → host):
+
+| Channels (0-indexed) | Carries |
+|---|---|
+| 8-9 | Mic (confirmed — avg 609204 / peak 3925597 vs a ~150 noise floor) |
+| 0-7 | not confirmed; possibly line/phono returns |
+
+Because the hardware does the mixing, whatever you send on channels 0-7
+must **not** already have fader/EQ/crossfader applied to it, or it gets
+processed twice. Mixxx does apply them by default — see
+[Using it with Mixxx](#using-it-with-mixxx).
 
 Master output isn't a USB channel at all — it's computed and output purely
 in analog by the onboard mixer from channels 0-7, so there's nothing to
