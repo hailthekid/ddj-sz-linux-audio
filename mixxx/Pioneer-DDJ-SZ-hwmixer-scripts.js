@@ -10,13 +10,16 @@
 var PioneerDDJSX = function() {};
 
 /*
-    MODIFIED 2026-09-03 for the Pioneer DDJ-SZ, by the ddj-sz-linux-audio
-    project (https://github.com/hailthekid/ddj-sz-linux-audio).
+    Pioneer DDJ-SZ hardware-mixer mapping
+    Copyright (c) 2026 hailthekid, licensed under GPL version 2 or later
+    https://github.com/hailthekid/ddj-sz-linux-audio
 
-    This is a modified copy of the Pioneer DDJ-SX mapping below, adapted for
-    running a DDJ-SZ in hardware-mixer mode, where the controller's own analog
-    mixer does the fading/EQ/crossfading and Mixxx must not also apply it.
-    Changes from the original:
+    This is a DERIVATIVE WORK, modified 2026-09-03 from DJMaxergy's Pioneer
+    DDJ-SX mapping for Mixxx (original header and its own attribution chain
+    follow below, preserved in full). It adapts that mapping for running a
+    DDJ-SZ in hardware-mixer mode, where the controller's own analog mixer
+    does the fading/EQ/crossfading and Mixxx must not also apply it.
+    Changes from DJMaxergy's original:
 
       - deckFaderMSB/deckFaderLSB, gainKnobLSB, filterHighKnobLSB,
         filterMidKnobLSB and filterLowKnobLSB are no-ops (the analog fader,
