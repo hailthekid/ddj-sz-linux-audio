@@ -11,7 +11,7 @@ var PioneerDDJSX = function() {};
 
 /*
     Pioneer DDJ-SZ hardware-mixer mapping
-    Copyright (c) 2026 hailthekid, licensed under GPL version 2 or later
+    Copyright (c) 2026 Hanh Kieu, licensed under GPL version 2 or later
     https://github.com/hailthekid/ddj-sz-linux-audio
 
     This is a DERIVATIVE WORK, modified 2026-09-03 from DJMaxergy's Pioneer

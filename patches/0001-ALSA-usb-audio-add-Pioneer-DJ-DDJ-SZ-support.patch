@@ -1,5 +1,5 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
-From: PLACEHOLDER_NAME <PLACEHOLDER_EMAIL>
+From: Hanh Kieu <hhkieu@gmail.com>
 Date: Thu, 1 Jan 1970 00:00:00 +0000
 Subject: [PATCH] ALSA: usb-audio: add Pioneer DJ DDJ-SZ support
 
@@ -34,7 +34,7 @@ hypothesis against actual de-interleaved payload data rather than
 packet-size arithmetic alone. Both playback and capture have been
 verified working with real audio, not just clean enumeration.
 
-Signed-off-by: PLACEHOLDER_NAME <PLACEHOLDER_EMAIL>
+Signed-off-by: Hanh Kieu <hhkieu@gmail.com>
 ---
  sound/usb/quirks-table.h | 49 +++++++++++++++++++++++++++++++++++++++++++++
  sound/usb/quirks.c       | 38 +++++++++++++++++++++++++++++++++++

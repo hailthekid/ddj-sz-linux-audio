@@ -7,12 +7,17 @@ DJM-900NXS2, DJM-450, and DJM-V10 quirks in mainline `sound/usb/quirks.c` and
 future kernel simply has DDJ-SZ support built in — no install script, no
 patching, for anyone, ever. That's the actual "permanent" fix.
 
-**Status: prepared, not yet sent.** The patch file has a placeholder
-`Signed-off-by` — the [Linux kernel's Developer Certificate of
+**Status: prepared and signed off, not yet sent.** The patch carries a real
+`Signed-off-by`, as the [Linux kernel's Developer Certificate of
 Origin](https://www.kernel.org/doc/html/latest/process/submitting-patches.html#sign-your-work-the-developer-s-certificate-of-origin)
-requires a real name and email on that line, since it becomes a public
-statement that you have the right to submit this code under the project's
-license. Fill that in with your real identity before sending anything.
+requires — it's a public statement that you have the right to submit this
+code under the project's license, and pseudonyms are not accepted.
+
+Both directions were re-verified on 2026-09-03 before sign-off: playback
+works, and mic capture reads avg 609204 / peak 3925597 on channels 8/9
+against a ~150 noise floor, with the arm sequence enabled. The commit
+message's claim that capture is "verified working with real audio" is
+therefore accurate as of that date.
 
 ## Sending it
 
