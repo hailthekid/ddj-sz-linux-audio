@@ -21,13 +21,27 @@ therefore accurate as of that date.
 
 ## Sending it
 
-1. **Find the right destination.** From a checkout of the patched tree:
-   ```bash
-   ./scripts/get_maintainer.pl patches/0001-ALSA-usb-audio-add-Pioneer-DJ-DDJ-SZ-support.patch
-   ```
-   This will list the current `sound/usb/` maintainers and the right mailing
-   list(s) — almost certainly `alsa-devel@alsa-project.org`, but let the
-   script confirm rather than assuming, since maintainership changes.
+The patch in `patches/` is now a real `git format-patch` output, generated
+from a commit on top of Takashi Iwai's `sound.git` `for-next` branch (the
+tree ALSA patches go to), so it carries a `base-commit:` line and applies
+with `git am`. It was verified against that tree, not just the Raspberry Pi
+fork it was originally developed on. `checkpatch.pl` reports 0 errors and
+0 warnings.
+
+1. **Recipients**, per `scripts/get_maintainer.pl` run against the ALSA tree
+   on 2026-09-03:
+
+   | Who | Address |
+   |---|---|
+   | Jaroslav Kysela (maintainer) | `perex@perex.cz` |
+   | Takashi Iwai (maintainer) | `tiwai@suse.com` |
+   | Subsystem list | `linux-sound@vger.kernel.org` |
+   | Open list | `linux-kernel@vger.kernel.org` |
+
+   Note this is **`linux-sound@vger.kernel.org`**, not the older
+   `alsa-devel@alsa-project.org` that a lot of stale documentation still
+   points at. Re-run `get_maintainer.pl` before sending if much time has
+   passed — maintainership and lists do change.
 
 2. **Set up `git send-email`** (one-time):
    ```bash
@@ -35,16 +49,19 @@ therefore accurate as of that date.
    git config --global sendemail.smtpserver <your mail provider's SMTP host>
    git config --global sendemail.smtpuser <you@example.com>
    ```
-   GitHub's own SMTP won't work here — this has to go out from a real mail
-   account, since it's a plain email to a mailing list, not a GitHub PR.
+   This has to go out from a real mail account — it's a plain email to a
+   mailing list, not a GitHub PR. The mail must be plain text, not HTML;
+   `git send-email` handles that, webmail generally does not.
 
 3. **Send it:**
    ```bash
-   git send-email --to=alsa-devel@alsa-project.org \
+   git send-email \
+     --to=perex@perex.cz \
+     --to=tiwai@suse.com \
+     --cc=linux-sound@vger.kernel.org \
+     --cc=linux-kernel@vger.kernel.org \
      patches/0001-ALSA-usb-audio-add-Pioneer-DJ-DDJ-SZ-support.patch
    ```
-   (adjust `--to` / add `--cc` per whatever `get_maintainer.pl` actually
-   reported).
 
 4. **Expect review.** Maintainers may ask questions or request changes
    before merging — that's normal for any kernel patch, not a sign

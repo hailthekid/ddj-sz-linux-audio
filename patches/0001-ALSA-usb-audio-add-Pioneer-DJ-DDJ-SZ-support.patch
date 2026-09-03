@@ -1,6 +1,6 @@
-From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From a4c905080eaa470f72a9c802178b8ffe33f11316 Mon Sep 17 00:00:00 2001
 From: Hanh Kieu <hhkieu@gmail.com>
-Date: Thu, 1 Jan 1970 00:00:00 +0000
+Date: Thu, 3 Sep 2026 16:01:43 -0700
 Subject: [PATCH] ALSA: usb-audio: add Pioneer DJ DDJ-SZ support
 
 The Pioneer DJ DDJ-SZ exposes its audio interface as USB vendor-specific
@@ -45,15 +45,15 @@ verified working with real audio, not just clean enumeration.
 
 Signed-off-by: Hanh Kieu <hhkieu@gmail.com>
 ---
- sound/usb/quirks-table.h | 47 +++++++++++++++++++++++++++++++++++++
- sound/usb/quirks.c       | 60 ++++++++++++++++++++++++++++++++++++++++++++++++
+ sound/usb/quirks-table.h | 47 +++++++++++++++++++++++++++++++
+ sound/usb/quirks.c       | 60 ++++++++++++++++++++++++++++++++++++++++
  2 files changed, 107 insertions(+)
 
 diff --git a/sound/usb/quirks-table.h b/sound/usb/quirks-table.h
-index eafc0d73c..2a69630be 100644
+index a1a33f11d..2da8cbe3e 100644
 --- a/sound/usb/quirks-table.h
 +++ b/sound/usb/quirks-table.h
-@@ -3368,6 +3368,53 @@ YAMAHA_DEVICE(0x7010, "UB99"),
+@@ -3731,6 +3731,53 @@ YAMAHA_DEVICE(0x7010, "UB99"),
  		}
  	}
  },
@@ -108,10 +108,10 @@ index eafc0d73c..2a69630be 100644
  	/*
  	 * Pioneer DJ DJM-750MK2
 diff --git a/sound/usb/quirks.c b/sound/usb/quirks.c
-index b993037ac..cb96296bd 100644
+index 4936d66f9..f09599c0d 100644
 --- a/sound/usb/quirks.c
 +++ b/sound/usb/quirks.c
-@@ -1764,6 +1764,62 @@ static void set_format_emu_quirk(struct snd_usb_substream *subs,
+@@ -1767,6 +1767,62 @@ static void set_format_emu_quirk(struct snd_usb_substream *subs,
  	subs->pkt_offset_adj = (emu_samplerate_id >= EMU_QUIRK_SR_176400HZ) ? 4 : 0;
  }
  
@@ -174,7 +174,7 @@ index b993037ac..cb96296bd 100644
  static int pioneer_djm_set_format_quirk(struct snd_usb_substream *subs,
  					u16 windex)
  {
-@@ -1876,6 +1932,10 @@ void snd_usb_set_format_quirk(struct snd_usb_substream *subs,
+@@ -1948,6 +2004,10 @@ void snd_usb_set_format_quirk(struct snd_usb_substream *subs,
  	case USB_ID(0x08e4, 0x0163): /* Pioneer DJM-850 */
  		pioneer_djm_set_format_quirk(subs, 0x0086);
  		break;
@@ -185,6 +185,8 @@ index b993037ac..cb96296bd 100644
  	case USB_ID(0x0dba, 0x5000):
  		mbox3_set_format_quirk(subs, fmt); /* Digidesign Mbox 3 */
  		break;
+
+base-commit: 4c4e4be4edd5dbf5f7f6a3ef4fc0c243f2d01b3c
 -- 
-2.45.0
+2.47.3
 
