@@ -1,3 +1,6 @@
+#TLDR
+This makes Pioneer DJ DDJ-SZ work on your linux machine with mixxx
+
 # DDJ-SZ on Linux
 
 Full-duplex USB audio (10-channel playback + 10-channel capture, S24_3LE @
