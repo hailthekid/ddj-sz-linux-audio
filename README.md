@@ -4,6 +4,15 @@ Full-duplex USB audio (10-channel playback + 10-channel capture, S24_3LE @
 44.1kHz) for the Pioneer DDJ-SZ DJ controller on Linux, via a small patch to
 the kernel's existing `snd-usb-audio` driver — not a new driver, not DKMS.
 
+**Why this matters now:** AlphaTheta (Pioneer DJ) formally ended support for
+the DDJ-SZ in their [2026 discontinuation
+notice](https://downloads.support.alphatheta.com/documents/Support/Discontinuation_of_certain_supportservices_2026_en.pdf)
+— "firmware and driver updates for these products are no longer available",
+and "proper operation with the latest OS is not guaranteed". The same list
+covers the DDJ-SZ2, DDJ-SX/SX2, DDJ-RZ and much more. When a future Windows
+or macOS release breaks the vendor driver, there will be no fix. An in-kernel
+quirk doesn't depend on the vendor shipping anything ever again.
+
 The DDJ-SZ's audio interface identifies as USB vendor-specific class
 (`0xFF`), so there's no out-of-box Linux support: the same situation as
 Pioneer's DJM-750, DJM-850, DJM-900NXS2, DJM-450, and DJM-V10, all of which
