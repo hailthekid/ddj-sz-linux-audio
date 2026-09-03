@@ -104,6 +104,18 @@ analog by the onboard mixer and isn't a USB channel; channels 9-10 (ALSA
 whatever Booth Out feeds. Assigning Mixxx's "Headphones" to that pair is
 what originally made cue audio leak into the speakers.
 
+**Which controls are analog vs MIDI-only.** This is the distinction that
+decides whether a control has to be neutered. Tested by playing a tone
+straight to the device with no software running and moving each control:
+
+| Control | Behavior with no software running | Handling |
+|---|---|---|
+| TRIM / gain | changes the sound | analog — neutered in Mixxx |
+| HI / MID / LOW EQ | changes the sound | analog — neutered in Mixxx |
+| Channel fader | changes the sound | analog — neutered in Mixxx |
+| Crossfader + A/THRU/B assign | changes the sound | analog — orientation pinned center |
+| COLOR / filter knob | **no effect** | MIDI-only — left mapped to Mixxx's QuickEffect |
+
 Expected consequence of this mode: Mixxx's on-screen faders, crossfader, EQ
 and gain controls no longer move or do anything — the hardware owns all of
 them.
