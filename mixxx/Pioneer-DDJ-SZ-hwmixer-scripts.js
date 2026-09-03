@@ -203,6 +203,11 @@ PioneerDDJSX.pinDecksToUnity = function() {
     for (var i = 0; i < decks.length; i++) {
         engine.setValue(decks[i], "volume", 1);
         engine.setValue(decks[i], "orientation", 1);
+        engine.setParameter(decks[i], "pregain", 0.5);
+        var eq = "[EqualizerRack1_" + decks[i] + "_Effect1]";
+        engine.setParameter(eq, "parameter1", 0.5);
+        engine.setParameter(eq, "parameter2", 0.5);
+        engine.setParameter(eq, "parameter3", 0.5);
     }
 };
 
@@ -840,8 +845,8 @@ PioneerDDJSX.gainKnobMSB = function(channel, control, value, status, group) {
 };
 
 PioneerDDJSX.gainKnobLSB = function(channel, control, value, status, group) {
-    var fullValue = (PioneerDDJSX.highResMSB[group].gainKnob << 7) + value;
-    engine.setParameter(group, "pregain", fullValue / 0x3FFF);
+    // HARDWARE MIXER MODE: the analog TRIM pot already sets this deck's gain.
+    // Applying Mixxx's pregain on top would gain-stage it twice.
 };
 
 PioneerDDJSX.filterHighKnobMSB = function(channel, control, value, status, group) {
@@ -849,8 +854,7 @@ PioneerDDJSX.filterHighKnobMSB = function(channel, control, value, status, group
 };
 
 PioneerDDJSX.filterHighKnobLSB = function(channel, control, value, status, group) {
-    var fullValue = (PioneerDDJSX.highResMSB[group].filterHigh << 7) + value;
-    engine.setParameter("[EqualizerRack1_" + group + "_Effect1]", "parameter3", fullValue / 0x3FFF);
+    // HARDWARE MIXER MODE: analog HI EQ already applied by the hardware.
 };
 
 PioneerDDJSX.filterMidKnobMSB = function(channel, control, value, status, group) {
@@ -858,8 +862,7 @@ PioneerDDJSX.filterMidKnobMSB = function(channel, control, value, status, group)
 };
 
 PioneerDDJSX.filterMidKnobLSB = function(channel, control, value, status, group) {
-    var fullValue = (PioneerDDJSX.highResMSB[group].filterMid << 7) + value;
-    engine.setParameter("[EqualizerRack1_" + group + "_Effect1]", "parameter2", fullValue / 0x3FFF);
+    // HARDWARE MIXER MODE: analog MID EQ already applied by the hardware.
 };
 
 PioneerDDJSX.filterLowKnobMSB = function(channel, control, value, status, group) {
@@ -867,8 +870,7 @@ PioneerDDJSX.filterLowKnobMSB = function(channel, control, value, status, group)
 };
 
 PioneerDDJSX.filterLowKnobLSB = function(channel, control, value, status, group) {
-    var fullValue = (PioneerDDJSX.highResMSB[group].filterLow << 7) + value;
-    engine.setParameter("[EqualizerRack1_" + group + "_Effect1]", "parameter1", fullValue / 0x3FFF);
+    // HARDWARE MIXER MODE: analog LOW EQ already applied by the hardware.
 };
 
 // HARDWARE MIXER MODE: the DDJ-SZ's own analog channel fader already

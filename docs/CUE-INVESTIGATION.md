@@ -97,15 +97,32 @@ analog by the onboard mixer and isn't a USB channel; channels 9-10 (ALSA
 whatever Booth Out feeds. Assigning Mixxx's "Headphones" to that pair is
 what originally made cue audio leak into the speakers.
 
-Expected consequences of this mode: Mixxx's on-screen faders/crossfader no
-longer move or do anything (the hardware owns them), and EQ knobs still
-drive Mixxx's software EQ *in addition to* the analog EQ, so EQ applies
-twice. That only affects tone, not level, so it's left alone — neuter the
-EQ handlers the same way if it bothers you.
+4. **TRIM and HI/MID/LOW EQ knobs are no-ops too** (`gainKnobLSB`,
+   `filterHighKnobLSB`, `filterMidKnobLSB`, `filterLowKnobLSB`) — the analog
+   trim pot and analog EQ already do this in hardware; letting Mixxx apply
+   `pregain` and its software EQ on top would gain-stage and EQ each deck
+   twice, making both roughly twice as aggressive as the knob position
+   suggests. `init()` pins `pregain` and all three EQ bands flat (0.5).
+
+Expected consequence of this mode: Mixxx's on-screen faders, crossfader, EQ
+and gain controls no longer move or do anything — the hardware owns all of
+them.
 
 ## Separate minor issue: intermittent `usb_set_interface failed (-110)`
 
-The first stream open after an idle period sometimes fails with
-`ETIMEDOUT`; the next attempt succeeds. Consistent with USB autosuspend
-powering the device down while idle. Unrelated to cue; a udev rule
-disabling autosuspend for `08e4:0191` would address it.
+Occasionally a stream open fails with `ETIMEDOUT`
+(`usb 1-2: 0:1: usb_set_interface failed (-110)`); retrying always
+succeeded. Seven occurrences were logged across a long debugging session.
+
+**Cause unknown.** Two hypotheses were tested and both disproved:
+
+- *USB autosuspend* — ruled out. `/sys/bus/usb/devices/1-2/power/control`
+  already reads `on` (autosuspend disabled for this device), so it was
+  never powering down.
+- *First open after an idle period* — ruled out. Six back-to-back
+  open/close cycles produced no errors, and neither did a deliberate
+  90-second idle followed by an open.
+
+Not reproducible on demand as of 2026-09-03, and harmless in practice
+(retry works). Left documented in case someone else hits it and finds the
+trigger.
