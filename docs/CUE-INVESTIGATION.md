@@ -78,8 +78,15 @@ Changes from stock DDJ-SX:
 2. **Crossfader-assign switches always set `orientation` to 1 (center)** —
    Mixxx's software crossfader never attenuates a deck; the physical
    A/THRU/B switch and analog crossfader do the real work.
-3. **`init()` pins all four decks to `volume = 1` and `orientation = 1`,**
-   re-asserted on a 2s timer.
+3. **TRIM and HI/MID/LOW EQ knobs are no-ops too** (`gainKnobLSB`,
+   `filterHighKnobLSB`, `filterMidKnobLSB`, `filterLowKnobLSB`) — the analog
+   trim pot and analog EQ already do this in hardware; letting Mixxx apply
+   `pregain` and its software EQ on top would gain-stage and EQ each deck
+   twice, making both roughly twice as aggressive as the knob position
+   suggests.
+4. **`init()` pins all four decks** to `volume = 1`, `orientation = 1`,
+   `pregain` flat and all three EQ bands flat (0.5) — re-asserted on a 2s
+   timer.
 
 Sound Hardware config that goes with it (`~/.mixxx/soundconfig.xml`) — four
 Deck outputs, nothing else assigned:
@@ -96,13 +103,6 @@ analog by the onboard mixer and isn't a USB channel; channels 9-10 (ALSA
 8-9) are the **Booth** output, and anything Mixxx sends there lands on
 whatever Booth Out feeds. Assigning Mixxx's "Headphones" to that pair is
 what originally made cue audio leak into the speakers.
-
-4. **TRIM and HI/MID/LOW EQ knobs are no-ops too** (`gainKnobLSB`,
-   `filterHighKnobLSB`, `filterMidKnobLSB`, `filterLowKnobLSB`) — the analog
-   trim pot and analog EQ already do this in hardware; letting Mixxx apply
-   `pregain` and its software EQ on top would gain-stage and EQ each deck
-   twice, making both roughly twice as aggressive as the knob position
-   suggests. `init()` pins `pregain` and all three EQ bands flat (0.5).
 
 Expected consequence of this mode: Mixxx's on-screen faders, crossfader, EQ
 and gain controls no longer move or do anything — the hardware owns all of
