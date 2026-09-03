@@ -2,7 +2,7 @@
 <MixxxControllerPreset mixxxVersion="2.1+" schemaVersion="1">
     <info>
         <name>Pioneer DDJ-SZ (hardware mixer)</name>
-        <author>Maximilian Beiersdorfer, DJMaxergy</author>
+        <author>Original DDJ-SX mapping: Maximilian Beiersdorfer, DJMaxergy. Modified 2026-09-03 for DDJ-SZ hardware-mixer mode by ddj-sz-linux-audio.</author>
         <description>DDJ-SX mapping adapted for DDJ-SZ hardware-mixer mode: Mixxx passes decks through at unity, the DDJ-SZ analog mixer does all fading/crossfading, so headphone Cue works at any crossfader position.</description>
         <forums>https://mixxx.discourse.group/t/pioneer-ddj-sx-controller-mapping/15954</forums>
         <manual>pioneer_ddj_sx</manual>
