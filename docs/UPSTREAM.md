@@ -7,17 +7,39 @@ DJM-900NXS2, DJM-450, and DJM-V10 quirks in mainline `sound/usb/quirks.c` and
 future kernel simply has DDJ-SZ support built in — no install script, no
 patching, for anyone, ever. That's the actual "permanent" fix.
 
-**Status: prepared and signed off, not yet sent.** The patch carries a real
-`Signed-off-by`, as the [Linux kernel's Developer Certificate of
-Origin](https://www.kernel.org/doc/html/latest/process/submitting-patches.html#sign-your-work-the-developer-s-certificate-of-origin)
-requires — it's a public statement that you have the right to submit this
-code under the project's license, and pseudonyms are not accepted.
+**Status: SENT 2026-09-03.** Submitted to the linux-sound list and both
+SOUND maintainers via `git send-email` (SMTP accepted, result 250).
+
+- Message-ID: `<20260903231641.18536-1-hhkieu@gmail.com>`
+- Archive: https://lore.kernel.org/linux-sound/20260903231641.18536-1-hhkieu@gmail.com/
+
+Awaiting review. Nothing further to do unless a maintainer replies.
 
 Both directions were re-verified on 2026-09-03 before sign-off: playback
 works, and mic capture reads avg 609204 / peak 3925597 on channels 8/9
 against a ~150 noise floor, with the arm sequence enabled. The commit
 message's claim that capture is "verified working with real audio" is
 therefore accurate as of that date.
+
+## If review asks for changes
+
+Reply **on the existing thread** (keep everyone Cc'd), and send revisions
+as a new version rather than a fresh submission:
+
+```bash
+# make the changes in ~/projects/alsa-sound on branch ddj-sz-support
+git commit --amend
+git format-patch -1 -v2 --base=HEAD~1 -o /tmp/alsa-patch/
+git send-email --in-reply-to='<20260903231641.18536-1-hhkieu@gmail.com>' \
+  --to=perex@perex.cz --to=tiwai@suse.com \
+  --cc=linux-sound@vger.kernel.org --cc=linux-kernel@vger.kernel.org \
+  /tmp/alsa-patch/v2-0001-*.patch
+```
+
+`-v2` marks it `[PATCH v2]`, and `--in-reply-to` keeps it threaded under the
+original so reviewers can follow the history. Add a short note under the
+`---` line summarising what changed since v1 (that text is dropped when the
+patch is applied, so it won't pollute the commit message).
 
 ## Sending it
 
