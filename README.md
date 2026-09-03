@@ -34,7 +34,7 @@ working.
 ## Quick start
 
 ```bash
-git clone https://github.com/<you>/ddj-sz-linux-audio.git
+git clone https://github.com/hailthekid/ddj-sz-linux-audio.git
 cd ddj-sz-linux-audio
 ./install.sh
 ```
@@ -154,11 +154,12 @@ walks through the USB captures that tracked the problem down.
 
 ## Known limitations
 
-- **Simultaneous playback + capture** hasn't been tested. ALSA auto-detects
-  implicit feedback between the OUT and IN endpoints on this device even
-  though the quirk table doesn't request it — if running both together
-  drifts or stutters, try adding `USB_ENDPOINT_USAGE_IMPLICIT_FB` to the
-  capture endpoint's `ep_attr` in `quirks-table.h`.
+- **Simultaneous playback + capture** hasn't been tested. Each direction
+  works on its own. Implicit feedback is handled without any quirk flag:
+  `is_pioneer_implicit_fb()` in `sound/usb/implicit.c` already covers vendor
+  `0x08e4` with a vendor-spec interface and two endpoints, and the driver
+  reports endpoint 0x82 as the playback sync endpoint
+  (`/proc/asound/cardN/stream0` shows `Implicit Feedback Mode: Yes`).
 - MIDI/control-surface mapping is a separate, already-class-compliant USB
   interface and is untouched by any of this.
 
