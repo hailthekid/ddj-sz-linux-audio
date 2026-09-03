@@ -112,6 +112,23 @@ whatever Booth Out is physically connected to instead.
 
 Channels 2-7 were previously unconfirmed; this table supersedes that.
 
+## Using it with Mixxx
+
+Getting the kernel module in place is only half the job — Mixxx also has to
+be told to let the DDJ-SZ's own analog mixer do the mixing, or decks get
+attenuated twice (once in software, once by the physical faders) and
+headphone Cue stops working at crossfader extremes.
+
+[`mixxx/`](mixxx/) contains a mapping adapted from the community Pioneer
+DDJ-SX mapping for this. Copy both files into `~/.mixxx/controllers/`, then
+pick **Pioneer DDJ-SZ (hardware mixer)** in Preferences → Controllers.
+Pair it with four Deck outputs in Preferences → Sound Hardware (channels
+1-2, 3-4, 5-6, 7-8) and **nothing** assigned to Master, Booth, or
+Headphones.
+
+[`docs/CUE-INVESTIGATION.md`](docs/CUE-INVESTIGATION.md) explains why, and
+walks through the USB captures that tracked the problem down.
+
 ## Known limitations
 
 - **Simultaneous playback + capture** hasn't been tested. ALSA auto-detects
