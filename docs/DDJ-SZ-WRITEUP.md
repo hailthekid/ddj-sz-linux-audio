@@ -272,6 +272,18 @@ Follow-up pass connecting the working ALSA device (§1-10) to Mixxx 2.5.0 as a d
 ### Open / not yet done
 
 - ~~**Mic audible live but absent from recordings**~~ — **SOLVED 2026-09-03.** Two things were needed, and the diagnosis above only covered the first. (1) Mixxx's Microphone input was pointed at the wrong channel pair; it must be set to device channels **9-10** in Preferences → Sound Hardware → Input (Mixxx numbers channels from 1, so that is ALSA capture channels 8-9 — the mic pair). (2) That alone still records nothing: a configured mic input is only mixed into the master bus, and therefore into recordings, while **talkover is enabled**. Open **View → Show Microphone Section** and hold/enable the **Talk** button while recording. Verified working. Note also that recording requires the main mix to be enabled (Preferences → Main Mix); if it has been disabled to save CPU, recordings will not contain anything.
+
+  **Sound Hardware — Output** (four Deck outputs, nothing on Main/Headphones/Booth):
+
+  ![Sound Hardware output config](images/mixxx-sound-hardware-output.png)
+
+  **Sound Hardware — Input** (Microphone 1 on channels 9-10):
+
+  ![Sound Hardware input config](images/mixxx-sound-hardware-input.png)
+
+  **The Talkover button** (mic section, `MIC/AUX` view) — must be enabled for the mic to reach the main mix / recordings:
+
+  ![Talkover button in the mic section](images/mixxx-talkover-button.png)
 - ~~**Headphone CUE monitoring silent**~~ — **SOLVED 2026-09-03, and the fix suggested here was the wrong one.** Do *not* add a `Headphones` output: there is no headphone channel pair to point it at. All ten playback channels are accounted for (four channel strips plus booth on 9-10), and pointing Mixxx's Headphones output at 9-10 just dumps cue audio out the booth jack — which is what leaked it into the speakers. Cue monitoring is handled entirely inside the hardware. The actual cause of silent cue was double attenuation: Mixxx's *Deck* output type applies its own volume and crossfader before sending, the analog mixer applies the physical controls again, and at the far crossfader position Mixxx sends digital silence, leaving the cue circuit nothing to monitor. See [CUE-INVESTIGATION.md](CUE-INVESTIGATION.md).
 - ~~**Crossfader dead zone**~~ — **SOLVED 2026-09-03; same root cause as the cue bug, not a hardware fault.** The "Magvel fader needs calibration" hypothesis was wrong; the fader hardware is fine and reports its full range cleanly. Audio cut out near the end of travel because Mixxx was attenuating the deck in software *and* the analog crossfader was attenuating it again, so the combined curve reached silence early. Fixed by stopping Mixxx applying its crossfader (pin every deck's `orientation` to center).
 - ~~**Channel 1 fader affecting a second deck's audible volume**~~ — **SOLVED 2026-09-03. Not analog crosstalk, and not a hardware fault.** The conclusion above ("wiring fault inside the DDJ-SZ's mixer section") followed from a correct observation and a wrong inference. At the time, Mixxx was configured with a single `Main` output on channels 1-2 — and channels 1-2 are physically wired to *channel strip 1*. So every deck's audio, already mixed together by Mixxx, arrived through strip 1 alone. Pulling strip 1's fader therefore lowered everything, deck 4 included, exactly as observed. Nothing was leaking between channels. Fixed by giving each deck its own output pair so each one reaches its own strip.

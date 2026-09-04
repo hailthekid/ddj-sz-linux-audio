@@ -67,8 +67,21 @@ Mixxx's default output type applies its own volume/crossfader before
 sending — double-processing the signal and breaking headphone Cue.
 [`mixxx/`](mixxx/) has a mapping that fixes this: copy both files to
 `~/.mixxx/controllers/`, select **Pioneer DDJ-SZ (hardware mixer)** in
-Preferences → Controllers, and set four Deck outputs (channels 1-2, 3-4,
-5-6, 7-8) with nothing on Master/Booth/Headphones.
+Preferences → Controllers, and match this Sound Hardware setup:
+
+**Output** — four Deck outputs, nothing on Main/Headphones/Booth:
+
+![Sound Hardware output config](docs/images/mixxx-sound-hardware-output.png)
+
+**Input** — Microphone 1 on channels 9-10:
+
+![Sound Hardware input config](docs/images/mixxx-sound-hardware-input.png)
+
+Getting the channels right isn't enough on its own to record the mic —
+Talkover has to be enabled too (View → Show Microphone Section), or the
+mic never reaches the main mix:
+
+![Talkover button in the mic section](docs/images/mixxx-talkover-button.png)
 
 Why, and how it was found: [`docs/CUE-INVESTIGATION.md`](docs/CUE-INVESTIGATION.md).
 

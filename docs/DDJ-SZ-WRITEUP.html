@@ -814,7 +814,7 @@ after the crossfader-assign fix just hadn’t had TRIM raised yet.</li>
 </ul>
 <h3 id="open-not-yet-done">Open / not yet done</h3>
 <ul>
-<li><del><strong>Mic audible live but absent from
+<li><p><del><strong>Mic audible live but absent from
 recordings</strong></del> — <strong>SOLVED 2026-09-03.</strong> Two
 things were needed, and the diagnosis above only covered the first. (1)
 Mixxx’s Microphone input was pointed at the wrong channel pair; it must
@@ -827,8 +827,31 @@ into recordings, while <strong>talkover is enabled</strong>. Open
 <strong>Talk</strong> button while recording. Verified working. Note
 also that recording requires the main mix to be enabled (Preferences →
 Main Mix); if it has been disabled to save CPU, recordings will not
-contain anything.</li>
-<li><del><strong>Headphone CUE monitoring silent</strong></del> —
+contain anything.</p>
+<p><strong>Sound Hardware — Output</strong> (four Deck outputs, nothing
+on Main/Headphones/Booth):</p>
+<figure>
+<img src="images/mixxx-sound-hardware-output.png"
+alt="Sound Hardware output config" />
+<figcaption aria-hidden="true">Sound Hardware output config</figcaption>
+</figure>
+<p><strong>Sound Hardware — Input</strong> (Microphone 1 on channels
+9-10):</p>
+<figure>
+<img src="images/mixxx-sound-hardware-input.png"
+alt="Sound Hardware input config" />
+<figcaption aria-hidden="true">Sound Hardware input config</figcaption>
+</figure>
+<p><strong>The Talkover button</strong> (mic section,
+<code>MIC/AUX</code> view) — must be enabled for the mic to reach the
+main mix / recordings:</p>
+<figure>
+<img src="images/mixxx-talkover-button.png"
+alt="Talkover button in the mic section" />
+<figcaption aria-hidden="true">Talkover button in the mic
+section</figcaption>
+</figure></li>
+<li><p><del><strong>Headphone CUE monitoring silent</strong></del> —
 <strong>SOLVED 2026-09-03, and the fix suggested here was the wrong
 one.</strong> Do <em>not</em> add a <code>Headphones</code> output:
 there is no headphone channel pair to point it at. All ten playback
@@ -840,8 +863,8 @@ was double attenuation: Mixxx’s <em>Deck</em> output type applies its
 own volume and crossfader before sending, the analog mixer applies the
 physical controls again, and at the far crossfader position Mixxx sends
 digital silence, leaving the cue circuit nothing to monitor. See <a
-href="CUE-INVESTIGATION.md">CUE-INVESTIGATION.md</a>.</li>
-<li><del><strong>Crossfader dead zone</strong></del> — <strong>SOLVED
+href="CUE-INVESTIGATION.md">CUE-INVESTIGATION.md</a>.</p></li>
+<li><p><del><strong>Crossfader dead zone</strong></del> — <strong>SOLVED
 2026-09-03; same root cause as the cue bug, not a hardware
 fault.</strong> The “Magvel fader needs calibration” hypothesis was
 wrong; the fader hardware is fine and reports its full range cleanly.
@@ -849,8 +872,8 @@ Audio cut out near the end of travel because Mixxx was attenuating the
 deck in software <em>and</em> the analog crossfader was attenuating it
 again, so the combined curve reached silence early. Fixed by stopping
 Mixxx applying its crossfader (pin every deck’s <code>orientation</code>
-to center).</li>
-<li><del><strong>Channel 1 fader affecting a second deck’s audible
+to center).</p></li>
+<li><p><del><strong>Channel 1 fader affecting a second deck’s audible
 volume</strong></del> — <strong>SOLVED 2026-09-03. Not analog crosstalk,
 and not a hardware fault.</strong> The conclusion above (“wiring fault
 inside the DDJ-SZ’s mixer section”) followed from a correct observation
@@ -860,7 +883,7 @@ physically wired to <em>channel strip 1</em>. So every deck’s audio,
 already mixed together by Mixxx, arrived through strip 1 alone. Pulling
 strip 1’s fader therefore lowered everything, deck 4 included, exactly
 as observed. Nothing was leaking between channels. Fixed by giving each
-deck its own output pair so each one reaches its own strip.</li>
+deck its own output pair so each one reaches its own strip.</p></li>
 </ul>
 <hr />
 <h2 id="appendix-file-locations">Appendix: file locations</h2>
