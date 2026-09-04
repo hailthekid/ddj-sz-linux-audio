@@ -23,27 +23,16 @@ Re-run it after every kernel update.
 
 ### Other Linux distros — manual
 
-There's no single command for this part, because every distro packages
-kernel source differently — this is genuinely the hard part, not a
-formality. What you need is the **kernel source code, matching your exact
-running kernel version**, so you can build a driver module against it.
-Check your version with `uname -r` first; you'll need source that matches
-it exactly, or the built module won't load.
+Every distro packages kernel source differently. Debian/Ubuntu example:
+```bash
+sudo apt install linux-source
+cd /usr/src && sudo tar xf linux-source-*.tar.xz
+cd linux-source-*/
+```
+Other distros: search "<distro> kernel source" — must match `uname -r`
+exactly, or skip this and use the Raspberry Pi script above.
 
-Most distros offer *some* package for this (Debian/Ubuntu:
-`linux-source`; Arch: `linux-headers`; Fedora: `kernel-devel`), but
-whether the version it gives you is an **exact** match for `uname -r` —
-not just close — depends entirely on your distro and when you installed
-it. Search "<your distro> kernel source matching running kernel" for the
-current, correct steps; this is genuinely too distro-specific for one set
-of commands to cover honestly. If you can't get an exact match, you
-generally can't build a loadable module at all short of building your own
-kernel — at that point, a distro that makes this easy (Raspberry Pi OS,
-via the script above) is far less work than fighting it.
-
-Once you have that source tree, `cd` into it and run these **from inside
-it** — everything below assumes your terminal is sitting in that
-directory:
+From inside that source directory, run:
 
 ```bash
 git apply /path/to/ddj-sz-linux-audio/patches/0001-ALSA-usb-audio-add-Pioneer-DJ-DDJ-SZ-support.patch
