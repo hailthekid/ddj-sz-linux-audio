@@ -7,42 +7,63 @@ Full story, reverse-engineering details, and debugging logs:
 [`docs/DDJ-SZ-WRITEUP.md`](docs/DDJ-SZ-WRITEUP.md) ·
 [`docs/CUE-INVESTIGATION.md`](docs/CUE-INVESTIGATION.md)
 
-## Install (any Linux)
+## Install
 
-1. Clone this repo, and separately get a kernel source tree matching your
-   running kernel exactly (`uname -r`).
-2. From inside that kernel source tree, apply the patch:
-   ```bash
-   git apply /path/to/ddj-sz-linux-audio/patches/0001-ALSA-usb-audio-add-Pioneer-DJ-DDJ-SZ-support.patch
-   ```
-3. Build and install just the module (still inside the kernel tree):
-   ```bash
-   ARCH=<your arch> LOCALVERSION= make modules_prepare
-   ARCH=<your arch> LOCALVERSION= make M=sound/usb
-   sudo cp sound/usb/snd-usb-audio.ko /lib/modules/$(uname -r)/kernel/sound/usb/
-   sudo depmod -a && sudo modprobe -r snd_usb_audio && sudo modprobe snd_usb_audio
-   ```
-4. Verify: `modinfo -F vermagic sound/usb/snd-usb-audio.ko` must exactly
-   match `uname -r`, or it won't load. See
-   [Troubleshooting](#troubleshooting) if it doesn't.
-
-Then plug in the DDJ-SZ and check:
-```bash
-aplay -l ; arecord -l                                   # look for DDJSZ
-speaker-test -D hw:X,0 -c 10 -r 44100 -F S24_3LE -l 1    # X = card number
-arecord -D hw:X,0 -c 10 -f S24_3LE -r 44100 test.wav     # talk into the mic
-```
-
-### Raspberry Pi OS (automated)
+### Raspberry Pi OS — one command
 
 ```bash
 git clone https://github.com/hailthekid/ddj-sz-linux-audio.git
 cd ddj-sz-linux-audio
 ./install.sh
 ```
-Automates the steps above for Raspberry Pi OS kernels specifically —
-finds the matching `raspberrypi/linux` source, patches, builds, installs.
-**Read the script before running it.** Re-run after every kernel update.
+This does everything below for you: finds the exact kernel source matching
+your running kernel, patches it, builds just the affected module, and
+installs it. **Read the script before running it** — it needs `sudo`.
+Re-run it after every kernel update.
+
+### Other Linux distros — manual
+
+There's no single command for this part, because every distro packages
+kernel source differently — this is genuinely the hard part, not a
+formality. What you need is the **kernel source code, matching your exact
+running kernel version**, so you can build a driver module against it.
+Check your version with `uname -r` first; you'll need source that matches
+it exactly, or the built module won't load.
+
+Most distros offer *some* package for this (Debian/Ubuntu:
+`linux-source`; Arch: `linux-headers`; Fedora: `kernel-devel`), but
+whether the version it gives you is an **exact** match for `uname -r` —
+not just close — depends entirely on your distro and when you installed
+it. Search "<your distro> kernel source matching running kernel" for the
+current, correct steps; this is genuinely too distro-specific for one set
+of commands to cover honestly. If you can't get an exact match, you
+generally can't build a loadable module at all short of building your own
+kernel — at that point, a distro that makes this easy (Raspberry Pi OS,
+via the script above) is far less work than fighting it.
+
+Once you have that source tree, `cd` into it and run these **from inside
+it** — everything below assumes your terminal is sitting in that
+directory:
+
+```bash
+git apply /path/to/ddj-sz-linux-audio/patches/0001-ALSA-usb-audio-add-Pioneer-DJ-DDJ-SZ-support.patch
+ARCH=<your arch> LOCALVERSION= make modules_prepare
+ARCH=<your arch> LOCALVERSION= make M=sound/usb
+sudo cp sound/usb/snd-usb-audio.ko /lib/modules/$(uname -r)/kernel/sound/usb/
+sudo depmod -a && sudo modprobe -r snd_usb_audio && sudo modprobe snd_usb_audio
+```
+
+Then verify: `modinfo -F vermagic sound/usb/snd-usb-audio.ko` must exactly
+match `uname -r`, or it won't load. See [Troubleshooting](#troubleshooting)
+if it doesn't.
+
+### Everyone — check it worked
+
+```bash
+aplay -l ; arecord -l                                   # look for DDJSZ
+speaker-test -D hw:X,0 -c 10 -r 44100 -F S24_3LE -l 1    # X = card number
+arecord -D hw:X,0 -c 10 -f S24_3LE -r 44100 test.wav     # talk into the mic
+```
 
 ## Channel map
 
