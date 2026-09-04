@@ -182,7 +182,7 @@ your distro's packaging suffix, not whatever came from `/proc/config.gz`.
 **Card enumerates, playback works, capture is silent.** If `arecord`
 produces a file with zero-signal on every channel (not just quiet — an
 exact zero) even with a live input, this was the actual bug encountered
-building this patch: the DDJ-SZ needs a one-time vendor "arm" sequence
+building this patch: the DDJ-SZ needs a vendor "arm" sequence
 before capture works, which the shipped quirk already includes
 (`ddj_sz_arm_quirk()` in `quirks.c`). If you're seeing this on a device
 this patch is supposed to cover, something's wrong with your build — check

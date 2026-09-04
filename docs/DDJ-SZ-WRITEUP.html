@@ -1,792 +1,886 @@
-<!doctype html>
-<html lang="en">
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>DDJ-SZ Field Notes</title>
-<style>
-  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Source+Serif+4:opsz,wght@8..60,400;8..60,500;8..60,600;8..60,700&display=swap');
-
-  :root {
-    --bg: #eef0ee;
-    --surface: #ffffff;
-    --ink: #171b20;
-    --ink-soft: #545e63;
-    --ink-faint: #838d90;
-    --border: #d3d9d5;
-    --panel-bg: #12161c;
-    --panel-surface: #1a2028;
-    --panel-ink: #dfe6e2;
-    --panel-ink-soft: #93a19b;
-    --panel-border: #2c3540;
-    --signal: #ac6a12;
-    --signal-on-panel: #efb64f;
-    --trace: #2c7c72;
-    --trace-on-panel: #7bd2c3;
-    --danger: #b3462c;
-    --danger-on-panel: #e08063;
-    --font-display: 'JetBrains Mono', ui-monospace, 'SFMono-Regular', Menlo, monospace;
-    --font-body: 'Source Serif 4', Georgia, 'Times New Roman', serif;
-    --font-mono: 'JetBrains Mono', ui-monospace, 'SFMono-Regular', Menlo, monospace;
-  }
-
-  @media (prefers-color-scheme: dark) {
-    :root:not([data-theme="light"]) {
-      --bg: #0f1216;
-      --surface: #171c22;
-      --ink: #e7ebe8;
-      --ink-soft: #a3aeab;
-      --ink-faint: #6c7679;
-      --border: #2a3138;
-      --panel-bg: #090b0e;
-      --panel-surface: #14181d;
-      --panel-ink: #e3e9e5;
-      --panel-ink-soft: #8b9793;
-      --panel-border: #262e35;
-      --signal: #efb64f;
-      --signal-on-panel: #efb64f;
-      --trace: #7bd2c3;
-      --trace-on-panel: #7bd2c3;
-      --danger: #e08063;
-      --danger-on-panel: #e08063;
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>Pioneer DDJ-SZ Linux Audio Support — Project Writeup</title>
+  <style>
+    code{white-space: pre-wrap;}
+    span.smallcaps{font-variant: small-caps;}
+    div.columns{display: flex; gap: min(4vw, 1.5em);}
+    div.column{flex: auto; overflow-x: auto;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    /* The extra [class] is a hack that increases specificity enough to
+       override a similar rule in reveal.js */
+    ul.task-list[class]{list-style: none;}
+    ul.task-list li input[type="checkbox"] {
+      font-size: inherit;
+      width: 0.8em;
+      margin: 0 0.8em 0.2em -1.6em;
+      vertical-align: middle;
     }
-  }
-
-  :root[data-theme="dark"] {
-    --bg: #0f1216;
-    --surface: #171c22;
-    --ink: #e7ebe8;
-    --ink-soft: #a3aeab;
-    --ink-faint: #6c7679;
-    --border: #2a3138;
-    --panel-bg: #090b0e;
-    --panel-surface: #14181d;
-    --panel-ink: #e3e9e5;
-    --panel-ink-soft: #8b9793;
-    --panel-border: #262e35;
-    --signal: #efb64f;
-    --signal-on-panel: #efb64f;
-    --trace: #7bd2c3;
-    --trace-on-panel: #7bd2c3;
-    --danger: #e08063;
-    --danger-on-panel: #e08063;
-  }
-
-  * { box-sizing: border-box; }
-
-  body {
-    margin: 0;
-    background: var(--bg);
-    color: var(--ink);
-    font-family: var(--font-body);
-    font-size: 17px;
-    line-height: 1.65;
-    -webkit-font-smoothing: antialiased;
-  }
-
-  a { color: var(--trace); text-decoration-thickness: 1px; text-underline-offset: 3px; }
-  a:hover { color: var(--signal); }
-  a:focus-visible, button:focus-visible, summary:focus-visible {
-    outline: 2px solid var(--trace);
-    outline-offset: 2px;
-    border-radius: 2px;
-  }
-
-  code, .mono { font-family: var(--font-mono); }
-
-  /* ---------- header / nameplate ---------- */
-
-  header.masthead {
-    position: relative;
-    border-bottom: 1px solid var(--border);
-    background:
-      linear-gradient(180deg, var(--panel-bg) 0%, var(--panel-bg) 100%);
-    color: var(--panel-ink);
-    overflow: hidden;
-  }
-
-  .masthead-inner {
-    position: relative;
-    z-index: 1;
-    max-width: 74rem;
-    margin: 0 auto;
-    padding: 3.4rem 2rem 2.6rem;
-  }
-
-  .eyebrow {
-    font-family: var(--font-display);
-    font-size: 0.72rem;
-    font-weight: 600;
-    letter-spacing: 0.16em;
-    text-transform: uppercase;
-    color: var(--signal-on-panel);
-    display: flex;
-    align-items: center;
-    gap: 0.6em;
-  }
-  .eyebrow::before {
-    content: "";
-    width: 1.6em;
-    height: 1px;
-    background: var(--signal-on-panel);
-    display: inline-block;
-  }
-
-  h1.title {
-    font-family: var(--font-display);
-    font-weight: 700;
-    font-size: clamp(2.1rem, 4.4vw, 3.4rem);
-    letter-spacing: -0.01em;
-    margin: 0.5rem 0 0.6rem;
-    text-wrap: balance;
-    color: var(--panel-ink);
-  }
-
-  p.deck {
-    font-family: var(--font-body);
-    font-size: 1.18rem;
-    line-height: 1.5;
-    max-width: 44rem;
-    color: var(--panel-ink-soft);
-    margin: 0 0 2.2rem;
-    text-wrap: pretty;
-  }
-
-  .nameplate {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
-    border: 1px solid var(--panel-border);
-    border-radius: 4px;
-    background: var(--panel-surface);
-    overflow: hidden;
-  }
-  .nameplate dl {
-    margin: 0;
-    padding: 0.95rem 1.15rem;
-    border-right: 1px solid var(--panel-border);
-  }
-  .nameplate dl:last-child { border-right: none; }
-  .nameplate dt {
-    font-family: var(--font-display);
-    font-size: 0.66rem;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    color: var(--panel-ink-soft);
-    margin-bottom: 0.35rem;
-  }
-  .nameplate dd {
-    margin: 0;
-    font-family: var(--font-mono);
-    font-size: 0.98rem;
-    color: var(--panel-ink);
-    font-weight: 500;
-  }
-  .nameplate dd.ok { color: var(--trace-on-panel); }
-  .nameplate dd.ok::before { content: "● "; font-size: 0.65em; vertical-align: 0.1em; }
-
-  .trace-svg {
-    position: absolute;
-    inset: 0;
-    width: 100%;
-    height: 100%;
-    z-index: 0;
-    opacity: 0.55;
-  }
-
-  /* ---------- layout shell ---------- */
-
-  .shell {
-    max-width: 74rem;
-    margin: 0 auto;
-    padding: 0 2rem;
-    display: grid;
-    grid-template-columns: 15rem minmax(0, 1fr);
-    gap: 3rem;
-    align-items: start;
-  }
-
-  nav.toc {
-    position: sticky;
-    top: 2.2rem;
-    padding: 2.6rem 0 3rem;
-    font-family: var(--font-display);
-    font-size: 0.82rem;
-  }
-  nav.toc .toc-label {
-    font-size: 0.66rem;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    color: var(--ink-faint);
-    margin-bottom: 0.9rem;
-  }
-  nav.toc ol {
-    list-style: none;
-    margin: 0;
-    padding: 0;
-    display: flex;
-    flex-direction: column;
-    gap: 0.05rem;
-    border-left: 1px solid var(--border);
-  }
-  nav.toc a {
-    display: block;
-    padding: 0.42rem 0 0.42rem 0.9rem;
-    color: var(--ink-soft);
-    text-decoration: none;
-    border-left: 2px solid transparent;
-    margin-left: -1px;
-    line-height: 1.3;
-  }
-  nav.toc a:hover { color: var(--ink); border-left-color: var(--ink-faint); }
-  nav.toc .num { color: var(--ink-faint); margin-right: 0.5em; }
-
-  main {
-    padding: 2.6rem 0 6rem;
-    min-width: 0;
-  }
-
-  section.entry {
-    max-width: 40rem;
-    padding-top: 2.6rem;
-    margin-top: 2.6rem;
-    border-top: 1px solid var(--border);
-  }
-  section.entry:first-of-type { border-top: none; margin-top: 0; padding-top: 0; }
-
-  .entry-head {
-    display: flex;
-    align-items: baseline;
-    gap: 0.85rem;
-    margin-bottom: 1.1rem;
-  }
-  .entry-num {
-    font-family: var(--font-display);
-    font-weight: 600;
-    font-size: 0.95rem;
-    color: var(--signal);
-    flex-shrink: 0;
-  }
-  h2 {
-    font-family: var(--font-display);
-    font-size: 1.32rem;
-    font-weight: 600;
-    letter-spacing: -0.005em;
-    margin: 0;
-    text-wrap: balance;
-  }
-  h3 {
-    font-family: var(--font-display);
-    font-size: 1.02rem;
-    font-weight: 600;
-    margin: 1.9rem 0 0.7rem;
-  }
-
-  section.entry > p, section.entry > ul, section.entry > ol {
-    margin: 0 0 1.15rem;
-  }
-  section.entry p:last-child { margin-bottom: 0; }
-
-  p, li { max-width: 40rem; }
-  ul, ol { padding-left: 1.3rem; }
-  li { margin-bottom: 0.4rem; }
-  li::marker { color: var(--ink-faint); }
-
-  strong { font-weight: 600; color: var(--ink); }
-
-  p code, li code {
-    font-size: 0.86em;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 3px;
-    padding: 0.1em 0.35em;
-    color: var(--signal);
-  }
-  :root[data-theme="dark"] p code, :root[data-theme="dark"] li code {
-    color: var(--signal-on-panel);
-  }
-  @media (prefers-color-scheme: dark) {
-    :root:not([data-theme="light"]) p code,
-    :root:not([data-theme="light"]) li code { color: var(--signal-on-panel); }
-  }
-
-  /* ---------- panels (instrument-readout treatment) ---------- */
-
-  .panel {
-    background: var(--panel-bg);
-    color: var(--panel-ink);
-    border: 1px solid var(--panel-border);
-    border-radius: 6px;
-    margin: 1.4rem 0 1.6rem;
-    max-width: 44rem;
-  }
-  .panel-label {
-    font-family: var(--font-display);
-    font-size: 0.68rem;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    color: var(--panel-ink-soft);
-    padding: 0.7rem 1.1rem 0;
-  }
-  pre.panel-body {
-    margin: 0;
-    padding: 0.7rem 1.1rem 1.05rem;
-    overflow-x: auto;
-    font-family: var(--font-mono);
-    font-size: 0.83rem;
-    line-height: 1.62;
-    white-space: pre;
-    color: var(--panel-ink);
-  }
-  pre.panel-body .cmt { color: var(--panel-ink-soft); font-style: italic; }
-  pre.panel-body .kw { color: var(--trace-on-panel); }
-  pre.panel-body .val { color: var(--signal-on-panel); }
-
-  .callout {
-    max-width: 40rem;
-    margin: 1.5rem 0;
-    padding: 1rem 1.2rem;
-    border-left: 3px solid var(--signal);
-    background: var(--surface);
-    border-radius: 0 4px 4px 0;
-  }
-  .callout p { margin: 0; font-size: 0.98rem; }
-  .callout .callout-label {
-    font-family: var(--font-display);
-    font-size: 0.66rem;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    color: var(--signal);
-    margin-bottom: 0.4rem;
-  }
-
-  /* ---------- tables (data readouts) ---------- */
-
-  .table-wrap {
-    max-width: 44rem;
-    overflow-x: auto;
-    margin: 1.4rem 0 1.6rem;
-    border-radius: 6px;
-    border: 1px solid var(--panel-border);
-  }
-  table {
-    border-collapse: collapse;
-    width: 100%;
-    background: var(--panel-bg);
-    font-family: var(--font-mono);
-    font-size: 0.84rem;
-    font-variant-numeric: tabular-nums;
-  }
-  caption {
-    text-align: left;
-    font-family: var(--font-display);
-    font-size: 0.68rem;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    color: var(--panel-ink-soft);
-    padding: 0.75rem 1.1rem 0.5rem;
-  }
-  th, td {
-    padding: 0.55rem 1rem;
-    text-align: left;
-    border-bottom: 1px solid var(--panel-border);
-    color: var(--panel-ink);
-    white-space: nowrap;
-  }
-  thead th {
-    color: var(--panel-ink-soft);
-    font-weight: 500;
-    font-size: 0.72rem;
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
-    border-bottom: 1px solid var(--panel-border);
-  }
-  tbody tr:last-child td { border-bottom: none; }
-  td.num, th.num { text-align: right; }
-  td.hi { color: var(--signal-on-panel); font-weight: 600; }
-
-  /* ---------- footer ---------- */
-
-  footer {
-    border-top: 1px solid var(--border);
-    padding: 2.4rem 2rem 4rem;
-  }
-  footer .inner {
-    max-width: 74rem;
-    margin: 0 auto;
-    display: flex;
-    justify-content: space-between;
-    align-items: baseline;
-    flex-wrap: wrap;
-    gap: 0.6rem;
-    font-family: var(--font-display);
-    font-size: 0.74rem;
-    color: var(--ink-faint);
-    letter-spacing: 0.02em;
-  }
-
-  @media (max-width: 860px) {
-    .shell { grid-template-columns: 1fr; gap: 0; }
-    nav.toc {
-      position: static;
-      padding: 1.4rem 0 0.4rem;
-      overflow-x: auto;
+    .display.math{display: block; text-align: center; margin: 0.5rem auto;}
+    /* CSS for syntax highlighting */
+    pre > code.sourceCode { white-space: pre; position: relative; }
+    pre > code.sourceCode > span { line-height: 1.25; }
+    pre > code.sourceCode > span:empty { height: 1.2em; }
+    .sourceCode { overflow: visible; }
+    code.sourceCode > span { color: inherit; text-decoration: inherit; }
+    div.sourceCode { margin: 1em 0; }
+    pre.sourceCode { margin: 0; }
+    @media screen {
+    div.sourceCode { overflow: auto; }
     }
-    nav.toc ol { flex-direction: row; border-left: none; border-top: 1px solid var(--border); gap: 0; }
-    nav.toc a { border-left: none; border-top: 2px solid transparent; padding: 0.7rem 0.85rem 0.5rem; white-space: nowrap; }
-    nav.toc a:hover { border-top-color: var(--ink-faint); }
-    main { padding-top: 1.6rem; }
-  }
-
-  @media (prefers-reduced-motion: no-preference) {
-    a, .nameplate dd { transition: color 0.15s ease; }
-  }
-</style>
+    @media print {
+    pre > code.sourceCode { white-space: pre-wrap; }
+    pre > code.sourceCode > span { display: inline-block; text-indent: -5em; padding-left: 5em; }
+    }
+    pre.numberSource code
+      { counter-reset: source-line 0; }
+    pre.numberSource code > span
+      { position: relative; left: -4em; counter-increment: source-line; }
+    pre.numberSource code > span > a:first-child::before
+      { content: counter(source-line);
+        position: relative; left: -1em; text-align: right; vertical-align: baseline;
+        border: none; display: inline-block;
+        -webkit-touch-callout: none; -webkit-user-select: none;
+        -khtml-user-select: none; -moz-user-select: none;
+        -ms-user-select: none; user-select: none;
+        padding: 0 4px; width: 4em;
+        color: #aaaaaa;
+      }
+    pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+    div.sourceCode
+      {   }
+    @media screen {
+    pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+    }
+    code span.al { color: #ff0000; font-weight: bold; } /* Alert */
+    code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+    code span.at { color: #7d9029; } /* Attribute */
+    code span.bn { color: #40a070; } /* BaseN */
+    code span.bu { color: #008000; } /* BuiltIn */
+    code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+    code span.ch { color: #4070a0; } /* Char */
+    code span.cn { color: #880000; } /* Constant */
+    code span.co { color: #60a0b0; font-style: italic; } /* Comment */
+    code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+    code span.do { color: #ba2121; font-style: italic; } /* Documentation */
+    code span.dt { color: #902000; } /* DataType */
+    code span.dv { color: #40a070; } /* DecVal */
+    code span.er { color: #ff0000; font-weight: bold; } /* Error */
+    code span.ex { } /* Extension */
+    code span.fl { color: #40a070; } /* Float */
+    code span.fu { color: #06287e; } /* Function */
+    code span.im { color: #008000; font-weight: bold; } /* Import */
+    code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+    code span.kw { color: #007020; font-weight: bold; } /* Keyword */
+    code span.op { color: #666666; } /* Operator */
+    code span.ot { color: #007020; } /* Other */
+    code span.pp { color: #bc7a00; } /* Preprocessor */
+    code span.sc { color: #4070a0; } /* SpecialChar */
+    code span.ss { color: #bb6688; } /* SpecialString */
+    code span.st { color: #4070a0; } /* String */
+    code span.va { color: #19177c; } /* Variable */
+    code span.vs { color: #4070a0; } /* VerbatimString */
+    code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+  </style>
+  <link rel="stylesheet" href="writeup.css" />
 </head>
 <body>
-
-<header class="masthead">
-  <svg class="trace-svg" viewBox="0 0 1200 340" preserveAspectRatio="none" aria-hidden="true">
-    <line x1="0" y1="40" x2="1200" y2="40" stroke="var(--panel-border)" stroke-width="1"/>
-    <line x1="0" y1="90" x2="1200" y2="90" stroke="var(--panel-border)" stroke-width="1"/>
-    <polyline points="0,300 40,300 40,270 70,270 70,300 130,300 130,240 150,240 150,300 210,300 210,260 260,260 260,300 320,300 320,220 345,220 345,300 400,300 400,280 430,280 430,300 500,300 500,250 520,250 520,300 590,300 590,235 615,235 615,300 680,300 680,265 705,265 705,300 770,300 770,210 800,210 800,300 860,300 860,255 885,255 885,300 950,300 950,275 975,275 975,300 1040,300 1040,230 1065,230 1065,300 1130,300 1130,260 1160,260 1160,300 1200,300"
-      fill="none" stroke="var(--trace)" stroke-width="1.4" opacity="0.85"/>
-  </svg>
-  <div class="masthead-inner">
-    <p class="eyebrow">Field notes &mdash; USB audio quirk</p>
-    <h1 class="title">Pioneer DDJ&#8209;SZ on Linux</h1>
-    <p class="deck">How a 10&#8209;channel, vendor&#8209;proprietary USB audio interface was brought up on a Raspberry Pi 5 by reverse&#8209;engineering the Windows driver's own USB traffic &mdash; and taught to an 87&#8209;line patch inside a driver that already existed.</p>
-    <div class="nameplate">
-      <dl>
-        <dt>USB ID</dt>
-        <dd>08e4&#8202;:&#8202;0191</dd>
-      </dl>
-      <dl>
-        <dt>Format</dt>
-        <dd>10ch &middot; S24_3LE &middot; 44.1kHz</dd>
-      </dl>
-      <dl>
-        <dt>Target</dt>
-        <dd>Pi&nbsp;5 &middot; 6.18.34+rpt&#8209;rpi&#8209;2712</dd>
-      </dl>
-      <dl>
-        <dt>Patch size</dt>
-        <dd>87 lines, in&#8209;tree</dd>
-      </dl>
-      <dl>
-        <dt>Playback</dt>
-        <dd class="ok">Confirmed</dd>
-      </dl>
-      <dl>
-        <dt>Capture</dt>
-        <dd class="ok">Confirmed</dd>
-      </dl>
-    </div>
-  </div>
+<header id="title-block-header">
+<h1 class="title">Pioneer DDJ-SZ Linux Audio Support — Project
+Writeup</h1>
 </header>
-
-<div class="shell">
-  <nav class="toc" aria-label="Table of contents">
-    <div class="toc-label">Contents</div>
-    <ol>
-      <li><a href="#quirk-vs-driver"><span class="num">1</span>Quirk, not driver</a></li>
-      <li><a href="#capture"><span class="num">2</span>Capturing the protocol</a></li>
-      <li><a href="#build-env"><span class="num">3</span>Build environment</a></li>
-      <li><a href="#applying"><span class="num">4</span>Applying the quirk</a></li>
-      <li><a href="#vermagic"><span class="num">5</span>The vermagic bug</a></li>
-      <li><a href="#install"><span class="num">6</span>Installation</a></li>
-      <li><a href="#round1"><span class="num">7</span>Playback works, capture doesn't</a></li>
-      <li><a href="#rootcause"><span class="num">8</span>Root cause in the pcap</a></li>
-      <li><a href="#fix"><span class="num">9</span>The fix, confirmed</a></li>
-      <li><a href="#open"><span class="num">10</span>Open items</a></li>
-      <li><a href="#appendix"><span class="num">&sect;</span>File locations</a></li>
-    </ol>
-  </nav>
-
-  <main>
-
-    <section class="entry" id="quirk-vs-driver">
-      <div class="entry-head"><span class="entry-num">01</span><h2>Why this is a &ldquo;quirk,&rdquo; not a driver</h2></div>
-
-      <p>Linux already ships a generic USB Audio Class (UAC) driver, <code>snd&#8209;usb&#8209;audio</code>. Any device that implements the standard UAC 1.0/2.0 descriptors works with it automatically &mdash; the driver reads the device's own descriptors at enumeration and configures itself. That's why a generic USB headset just works with zero drivers to install.</p>
-
-      <p>The DDJ&#8209;SZ doesn't implement UAC on its audio interface. It identifies as USB class <code>0xFF</code>, &ldquo;vendor&#8209;specific&rdquo; &mdash; meaning the OS can infer nothing from standard descriptors. Channel count, sample format, activation sequence: all of it is proprietary. Windows and macOS get a real Pioneer driver that hard&#8209;codes this knowledge.</p>
-
-      <p>On Linux, <code>snd&#8209;usb&#8209;audio</code> has a <strong>quirks system</strong> (<code>sound/usb/quirks.c</code> + <code>sound/usb/quirks&#8209;table.h</code>) built for exactly this: a table, keyed by USB vendor:product ID, that manually supplies what the driver would normally read from standard descriptors, plus &mdash; if needed &mdash; a small device&#8209;specific activation callback. It is not a new driver; it's a data&#8209;table entry inside a driver that already handles URB submission, PCM buffering, and ALSA registration for every other USB audio device on the system. The same mechanism already covers the Pioneer DJM&#8209;750, DJM&#8209;850, DJM&#8209;900NXS2, DJM&#8209;450, DJM&#8209;V10, DDJ&#8209;SX3, and DDJ&#8209;RB.</p>
-
-      <div class="callout">
-        <div class="callout-label">What actually got added</div>
-        <p>One ~49&#8209;line entry in <code>quirks&#8209;table.h</code> describing the DDJ&#8209;SZ's endpoints and format, and one new <code>case</code> in an existing <code>switch</code> statement in <code>quirks.c</code>, wiring its USB ID to an activation function. No new module, no new subsystem, no new files.</p>
-      </div>
-    </section>
-
-    <section class="entry" id="capture">
-      <div class="entry-head"><span class="entry-num">02</span><h2>Capturing the protocol with Wireshark</h2></div>
-
-      <p>With no public spec for a vendor&#8209;specific interface, the only way to learn the protocol was to capture and decode what the <em>official Windows driver</em> actually sends the device &mdash; on the theory that whatever bytes make the real driver work will make any driver work.</p>
-
-      <p><a href="https://desowin.org/usbpcap/">USBPcap</a>, a Windows kernel&#8209;mode USB bus filter, captured raw USB traffic while the DDJ&#8209;SZ was enumerated fresh, used for playback through Serato (so real music payload bytes would appear), and used for mic recording (so real capture&#8209;direction payload bytes would appear too). The result &mdash; <code>ddjdz.pcapng</code>, ~91MB, ~118,000 USB frames &mdash; was analyzed on the Linux side with <code>tshark</code>:</p>
-
-      <div class="panel">
-        <div class="panel-label">Shell &middot; locating the device in the capture</div>
-        <pre class="panel-body">tshark -r ddjdz.pcapng -Y <span class="val">"usb.idVendor == 0x08e4"</span> \
-  -T fields -e frame.number -e usb.device_address \
-  -e usb.idVendor -e usb.idProduct
-<span class="cmt"># &rarr; device address 8, every later filter keys off usb.device_address == 8</span></pre>
-      </div>
-
-      <p>USBPcap wraps every USB transaction in a 28&#8209;byte pseudo&#8209;header (IRP ID, status, URB function, bus/device/endpoint, transfer type, direction, data length) followed by the transferred bytes. Wireshark's dissector parses this automatically, exposing <code>usb.setup.bRequest</code>, <code>usb.setup.wValue</code>, <code>usb.setup.wIndex</code>, and &mdash; for completed transfers, in verbose (<code>-V</code>) output &mdash; a <code>CONTROL response data</code> field.</p>
-
-      <h3>2a &middot; Descriptor&#8209;level facts</h3>
-      <p>Filtering on <code>GET_DESCRIPTOR</code> responses (<code>bRequest == 6</code>) during enumeration confirmed USB ID <code>08e4:0191</code>; interface 0 as class <code>0xFF</code> with alt setting 0 idle (no endpoints) and alt setting 1 active (two isochronous endpoints); endpoint <code>0x01</code> OUT and endpoint <code>0x82</code> IN, both 1024&#8209;byte max packet, interval 3.</p>
-
-      <h3>2b &middot; Confirming the format from real payload bytes</h3>
-      <p>Max packet size alone was ambiguous: 1024 bytes/packet at a given rate is consistent with more than one channel&#8209;count/bit&#8209;depth combination &mdash; a competing <strong>15&#8209;channel, 16&#8209;bit</strong> hypothesis was plausible on paper. This was resolved empirically, not by guessing: isochronous frames on endpoint <code>0x01</code> were de&#8209;interleaved under both hypotheses and checked for internal coherence &mdash; does the result produce two channels whose waveforms correlate the way a real stereo mix should? The 10&#8209;channel, <code>S24_3LE</code> (24&#8209;bit packed, 3 bytes/sample) interpretation at fixed 44.1kHz produced coherent, correlated stereo on channels 0/1. The 15&#8209;channel hypothesis didn't.</p>
-      <p>Channel mapping followed the same empirical method: channels 0/1 correlated with Master output content during playback &rarr; <strong>Master L/R</strong>. Channels 8/9 correlated with spoken audio during a mic test &rarr; <strong>Mic</strong>. Channels 2&ndash;7 were never isolated in the original capture and remain unmapped &mdash; a documented open item, not a blocker.</p>
-
-      <h3>2c &middot; Finding the activation sequence</h3>
-      <p>Filtering control transfers in time order showed one immediately preceding the point where isochronous streaming actually starts:</p>
-
-      <div class="panel">
-        <div class="panel-label">Control transfer &middot; sample&#8209;rate SET_CUR</div>
-        <pre class="panel-body"><span class="kw">bmRequestType</span>=0x22, <span class="kw">bRequest</span>=0x01 (SET_CUR), <span class="kw">wValue</span>=0x0100
-<span class="kw">wIndex</span>=<span class="val">0x0082</span>, <span class="kw">wLength</span>=3, data = 44 ac 00  <span class="cmt">// little-endian 44100</span></pre>
-      </div>
-
-      <p>This request shape &mdash; <code>SET_INTERFACE</code> to alt&#8209;setting 1, then this <code>SET_CUR</code> &mdash; is structurally identical to <code>pioneer_djm_set_format_quirk()</code>, a function that <em>already exists</em> in mainline Linux for the DJM&#8209;750/850/900NXS2/450/V10. Those devices just call it with their own endpoint's <code>wIndex</code>. For the DDJ&#8209;SZ that value is <code>0x0082</code> &mdash; not guessed, not copied from the DJM example, read directly off this device's own capture. This single finding is what made &ldquo;no new driver&rdquo; viable: the activation handshake reuses infrastructure that already exists.</p>
-    </section>
-
-    <section class="entry" id="build-env">
-      <div class="entry-head"><span class="entry-num">03</span><h2>Kernel build environment</h2></div>
-
-      <p>Raspberry Pi OS &ldquo;trixie&rdquo; (Debian 13) ships kernel headers as Debian&#8209;style packages pre&#8209;matched to the running kernel, including a working <code>Module.symvers</code> and a <code>/lib/modules/$(uname&nbsp;-r)/build</code> symlink already in place &mdash; simpler than older Raspberry Pi OS releases assumed. Those packages only support building <em>external</em> modules, though; they don't ship in&#8209;tree source like <code>sound/usb/*.c</code>. Full source, matched to the exact version, was still required.</p>
-
-      <ol>
-        <li><code>uname -r</code> &rarr; <code>6.18.34+rpt&#8209;rpi&#8209;2712</code></li>
-        <li>Matched the upstream branch on <code>raspberrypi/linux</code> via <code>git ls-remote --heads</code> &mdash; branch names follow <code>rpi-&lt;major&gt;.&lt;minor&gt;.y</code>, so <code>rpi-6.18.y</code>.</li>
-        <li><code>git clone --depth=1 --branch rpi-6.18.y &hellip;</code> &mdash; shallow, for speed.</li>
-        <li>Installed missing build deps: <code>bc bison flex libssl-dev libncurses-dev</code>.</li>
-        <li>Extracted the running config: <code>sudo modprobe configs &amp;&amp; zcat /proc/config.gz &gt; .config</code> (the <code>configs</code> module has to be loaded first &mdash; <code>/proc/config.gz</code> doesn't exist until then).</li>
-        <li><code>make olddefconfig</code> to reconcile against this tree's current <code>Kconfig</code>.</li>
-      </ol>
-    </section>
-
-    <section class="entry" id="applying">
-      <div class="entry-head"><span class="entry-num">04</span><h2>Applying and building the quirk</h2></div>
-
-      <p>The new entry in <code>quirks-table.h</code> was inserted after the existing DJM&#8209;750 entry (found via <code>grep -n "0x08e4, 0x017f"</code> as anchor), following the same <code>QUIRK_DRIVER_INFO</code> / <code>QUIRK_DATA_COMPOSITE</code> / <code>QUIRK_DATA_AUDIOFORMAT</code> structure every other entry uses &mdash; two audioformat blocks, one per endpoint direction, both declaring 10 channels, <code>S24_3LE</code>, interface 0, altsetting 1, fixed 44100.</p>
-
-      <div class="panel">
-        <div class="panel-label">sound/usb/quirks-table.h &middot; new entry</div>
-        <pre class="panel-body">{
-	<span class="cmt">/* PIONEER DJ DDJ-SZ, 10ch in/out, S24_3LE @ 44.1 fixed */</span>
-	USB_DEVICE_VENDOR_SPEC(<span class="val">0x08e4, 0x0191</span>),
-	QUIRK_DRIVER_INFO {
-		QUIRK_DATA_COMPOSITE {
-			{ QUIRK_DATA_AUDIOFORMAT(0) {
-				.formats = SNDRV_PCM_FMTBIT_S24_3LE,
-				.channels = <span class="val">10</span>, .iface = 0, .altsetting = 1,
-				.endpoint = <span class="val">0x01</span>, <span class="cmt">/* playback */</span>
-				.rates = SNDRV_PCM_RATE_44100, &hellip;
-			} },
-			{ QUIRK_DATA_AUDIOFORMAT(0) {
-				.formats = SNDRV_PCM_FMTBIT_S24_3LE,
-				.channels = <span class="val">10</span>, .iface = 0, .altsetting = 1,
-				.endpoint = <span class="val">0x82</span>, .ep_idx = 1, <span class="cmt">/* capture */</span>
-				.rates = SNDRV_PCM_RATE_44100, &hellip;
-			} },
-			QUIRK_COMPOSITE_END
-		}
-	}
-},</pre>
-      </div>
-
-      <p>And a new case in the existing switch inside <code>snd_usb_set_format_quirk()</code>:</p>
-
-      <div class="panel">
-        <div class="panel-label">sound/usb/quirks.c</div>
-        <pre class="panel-body"><span class="kw">case</span> USB_ID(<span class="val">0x08e4, 0x0191</span>): <span class="cmt">/* Pioneer DDJ-SZ */</span>
-	pioneer_djm_set_format_quirk(subs, <span class="val">0x0082</span>);
-	<span class="kw">break</span>;</pre>
-      </div>
-
-      <p>Built module&#8209;only, not a full kernel rebuild:</p>
-      <div class="panel">
-        <div class="panel-label">Shell &middot; module build</div>
-        <pre class="panel-body">ARCH=arm64 LOCALVERSION= make -j$(nproc) modules_prepare
-ARCH=arm64 LOCALVERSION= make -j$(nproc) M=sound/usb
-<span class="cmt"># &rarr; sound/usb/snd-usb-audio.ko, modinfo confirms the new usb:v08E4p0191&hellip; alias</span></pre>
-      </div>
-    </section>
-
-    <section class="entry" id="vermagic">
-      <div class="entry-head"><span class="entry-num">05</span><h2>Debugging round 1: the module wouldn't have loaded</h2></div>
-
-      <p>The first successful build carried a fatal, silent problem: <code>modinfo</code> reported <code>vermagic: 6.18.45-v8-16k+</code> against a running kernel of <code>6.18.34+rpt-rpi-2712</code>. Linux refuses to load a module whose vermagic doesn't exactly match <code>uname -r</code>. Two separate causes, diagnosed and fixed independently.</p>
-
-      <h3>Wrong source commit</h3>
-      <p>The shallow clone's branch tip had already moved on to <code>6.18.45</code> &mdash; newer than what's installed. Fixed by deepening the clone (<code>git fetch --deepen=N</code>, incrementally, until the range of <code>SUBLEVEL</code> values in <code>Makefile</code> across history spanned past 34), then scripting a search across every fetched commit for the most recent one where <code>Makefile</code> read <code>VERSION&nbsp;=&nbsp;6&nbsp;/&nbsp;PATCHLEVEL&nbsp;=&nbsp;18&nbsp;/&nbsp;SUBLEVEL&nbsp;=&nbsp;34</code>. The working&#8209;tree edits were stashed, the tree checked out to that exact commit, and the stash popped back on top &mdash; auto&#8209;merged cleanly.</p>
-
-      <h3>Missing local version suffix</h3>
-      <p>Even at the right base version, the release string read <code>6.18.34-v8-16k+</code>, not <code>6.18.34+rpt-rpi-2712</code>. The <code>-v8-16k</code> piece came from <code>CONFIG_LOCALVERSION</code> baked into the pulled config &mdash; the raw upstream RPi default; the real packaging suffix is applied separately by Raspberry Pi's own build scripts, not stored in&#8209;tree. Fixed by editing <code>.config</code> directly (<code>CONFIG_LOCALVERSION="+rpt-rpi-2712"</code>). That still left a trailing <code>+</code>, which the kernel's <code>scripts/setlocalversion</code> appends whenever the tree has uncommitted changes and <code>LOCALVERSION</code> isn't explicitly set on the command line &mdash; fixed by passing <code>LOCALVERSION=</code> (empty, but set) on every subsequent build.</p>
-
-      <div class="callout">
-        <div class="callout-label">Result</div>
-        <p><code>vermagic: 6.18.34+rpt-rpi-2712 SMP preempt mod_unload modversions aarch64</code> &mdash; exact match.</p>
-      </div>
-    </section>
-
-    <section class="entry" id="install">
-      <div class="entry-head"><span class="entry-num">06</span><h2>Installation</h2></div>
-
-      <p>Before touching anything: confirmed <code>snd_usb_audio</code> wasn't currently loaded and no USB audio device was attached &mdash; so replacing the module carried no risk to an active session. The stock, <code>xz</code>&#8209;compressed module was backed up to <code>/root/ddj-sz-backup/</code>, then replaced with the freshly built <code>.ko</code>, <code>depmod -a</code> refreshed the dependency database, and <code>modprobe snd_usb_audio</code> loaded it. <code>dmesg</code> showed only the expected &ldquo;loading out&#8209;of&#8209;tree module taints kernel&rdquo; notice &mdash; harmless, expected for any module built outside the distro's own pipeline &mdash; and no probe errors.</p>
-
-      <p>This install is <strong>persistent across reboots</strong>: the file was replaced in place under <code>/lib/modules/</code> and will load automatically every boot. It only reverts if a future kernel package update reinstalls the stock module, at which point rebuilding from <code>~/projects/ddj-sz-kernel</code> and reinstalling the same way restores it.</p>
-    </section>
-
-    <section class="entry" id="round1">
-      <div class="entry-head"><span class="entry-num">07</span><h2>Testing round 1: playback confirmed, capture silently broken</h2></div>
-
-      <p>With the DDJ&#8209;SZ plugged in, <code>lsusb</code> showed clean enumeration and <code>aplay -l</code> / <code>arecord -l</code> both listed <code>card 2: DDJSZ</code>. <code>/proc/asound/card2/stream0</code> matched the design exactly: 10 channels, <code>S24_3LE</code>, 44100Hz, correct endpoints both directions.</p>
-
-      <p><strong>Playback</strong> &mdash; <code>speaker-test -D hw:2,0 -c 10 -r 44100 -F S24_3LE -l 1</code> &mdash; opened cleanly and ran a full pink&#8209;noise sweep with no xruns. (Its default <code>-t wav</code> mode is hardcoded to 48kHz/S16_LE regardless of <code>-F</code>/<code>-r</code> and fails <code>hwparams</code> against this fixed&#8209;format device; dropping <code>-t wav</code> for the default sine/pink generator fixed it.) <strong>Independently confirmed audible</strong> &mdash; real sound out of Master.</p>
-
-      <p><strong>Capture</strong> &mdash; <code>arecord -D hw:2,0 -c 10 -f S24_3LE -r 44100</code> &mdash; ran without any ALSA/USB error and wrote a correctly&#8209;sized WAV file. Per&#8209;channel RMS/peak analysis (a small Python script over the raw 24&#8209;bit packed samples) showed <strong>every sample on every one of the 10 channels was exactly zero</strong> &mdash; not quiet, a hard zero, for the entire recording. A true unbroken zero rarely happens from real analog noise floor; it's the signature of a data path that isn't delivering real samples at all.</p>
-
-      <p>The first run didn't rule out procedural error, so it was re&#8209;run a second time with a live person talking continuously into the mic and the hardware gain confirmed up. Still a hard, uniform zero across all channels &mdash; a real capture&#8209;path defect, not user error.</p>
-
-      <div class="callout">
-        <div class="callout-label">A red herring, ruled out</div>
-        <p><code>/proc/asound/card2/stream0</code> showed <code>Implicit Feedback Mode: Yes</code> on the playback stream, with endpoint <code>0x82</code> as sync source &mdash; even though the quirk table deliberately left <code>USB_ENDPOINT_USAGE_IMPLICIT_FB</code> unset (the SZ has genuinely separate IN/OUT endpoints and likely doesn't need it). ALSA auto&#8209;detects this for an async OUT endpoint with no explicit sync endpoint. Not the cause here &mdash; capture was tested standalone, no playback stream open &mdash; but worth knowing if simultaneous playback+capture ever misbehaves later.</p>
-      </div>
-    </section>
-
-    <section class="entry" id="rootcause">
-      <div class="entry-head"><span class="entry-num">08</span><h2>Root cause, found back in the pcap</h2></div>
-
-      <p>The original handoff notes had already flagged, as a contingency, a block of vendor status&#8209;query control transfers observed preceding the <code>SET_CUR</code> in the Windows capture &mdash; described only in paraphrase, with no exact <code>wValue</code>/<code>wIndex</code>. With capture broken and playback working, both driven by the same activation call, the working hypothesis was that this omitted block specifically arms the ADC/mic path. Re&#8209;examining <code>ddjdz.pcapng</code> resolved it precisely:</p>
-
-      <div class="panel">
-        <div class="panel-label">Shell &middot; isolating the vendor writes</div>
-        <pre class="panel-body">tshark -r ddjdz.pcapng -Y <span class="val">"usb.device_address == 8 &amp;&amp; usb.setup.bRequest == 3 &amp;&amp; usb.bmRequestType == 0x40"</span> \
-  -T fields -e frame.number -e frame.time_relative -e usb.setup.wValue -e usb.setup.wIndex
-<span class="cmt"># &rarr; exactly 6 matches, all clustered at t &asymp; 3.65&ndash;3.69s, immediately after enumeration
-# and never repeated anywhere else in the ~118,000-frame capture</span></pre>
-      </div>
-
-      <p>That timing &mdash; once, at bring&#8209;up, never again &mdash; is the signature of a one&#8209;time arming sequence, not something that needs to run before every stream. Each response was pulled from the verbose (<code>-V</code>) <code>CONTROL response data</code> field, frame by frame:</p>
-
-      <div class="table-wrap">
-        <table>
-          <caption>Vendor arm sequence &middot; six control transfers, once per device bring&#8209;up</caption>
-          <thead>
-            <tr><th class="num">#</th><th>write wValue</th><th>write wIndex</th><th class="num">read len</th><th>response</th></tr>
-          </thead>
-          <tbody>
-            <tr><td class="num">1</td><td>0x0100</td><td>0x8002</td><td class="num">6</td><td>00 04 04 04 04 04</td></tr>
-            <tr><td class="num">2</td><td>0x0200</td><td>0x8002</td><td class="num">6</td><td>00 04 04 04 04 04</td></tr>
-            <tr><td class="num">3</td><td>0x0303</td><td>0x8002</td><td class="num">6</td><td>00 04 04 04 04 04</td></tr>
-            <tr><td class="num">4</td><td>0x0403</td><td>0x8002</td><td class="num">6</td><td>00 04 04 04 04 04</td></tr>
-            <tr><td class="num">5</td><td>0x050a</td><td>0x8002</td><td class="num">6</td><td>00 04 04 04 04 04</td></tr>
-            <tr><td class="num">6</td><td>0x0000</td><td>0x8003</td><td class="num">2</td><td class="hi">00 00</td></tr>
-          </tbody>
-        </table>
-      </div>
-
-      <p>Every write shares <code>bmRequestType=0x40, bRequest=3, wLength=0</code> &mdash; the payload lives entirely in <code>wValue</code>/<code>wIndex</code>, no data stage. Every read shares <code>bmRequestType=0xc0, bRequest=0, wValue=0x0000</code>, using the write's <code>wIndex</code>. Since the read response is identical regardless of what was written, the reads are almost certainly just status polling &mdash; but since it was genuinely unclear whether the read itself was needed to make the device process the write, the full write+read pattern was replicated exactly rather than guessing which half was load&#8209;bearing.</p>
-    </section>
-
-    <section class="entry" id="fix">
-      <div class="entry-head"><span class="entry-num">09</span><h2>The fix, and confirmation</h2></div>
-
-      <div class="panel">
-        <div class="panel-label">sound/usb/quirks.c &middot; ddj_sz_arm_quirk()</div>
-        <pre class="panel-body"><span class="kw">static void</span> ddj_sz_arm_quirk(<span class="kw">struct</span> usb_device *dev)
-{
-	<span class="kw">static const struct</span> {
-		u16 value; u16 index; u8 read_len;
-	} cmds[] = {
-		{ <span class="val">0x0100, 0x8002</span>, 6 }, { <span class="val">0x0200, 0x8002</span>, 6 },
-		{ <span class="val">0x0303, 0x8002</span>, 6 }, { <span class="val">0x0403, 0x8002</span>, 6 },
-		{ <span class="val">0x050a, 0x8002</span>, 6 }, { <span class="val">0x0000, 0x8003</span>, 2 },
-	};
-	u8 buf[6];
-	<span class="kw">unsigned int</span> i;
-
-	<span class="kw">for</span> (i = 0; i &lt; ARRAY_SIZE(cmds); i++) {
-		snd_usb_ctl_msg(dev, usb_sndctrlpipe(dev, 0),
-			3, <span class="val">0x40</span>, cmds[i].value, cmds[i].index, NULL, 0);
-		snd_usb_ctl_msg(dev, usb_rcvctrlpipe(dev, 0),
-			0, <span class="val">0xc0</span>, 0x0000, cmds[i].index, buf, cmds[i].read_len);
-	}
-}
-
-<span class="cmt">/* wired into the existing switch: */</span>
-<span class="kw">case</span> USB_ID(<span class="val">0x08e4, 0x0191</span>): <span class="cmt">/* Pioneer DDJ-SZ */</span>
-	ddj_sz_arm_quirk(subs-&gt;dev);
-	pioneer_djm_set_format_quirk(subs, <span class="val">0x0082</span>);
-	<span class="kw">break</span>;</pre>
-      </div>
-
-      <p>Unlike the Windows driver, which ran this once at enumeration, this runs on every <code>snd_usb_set_format_quirk()</code> call &mdash; potentially every stream open, not just once per plug&#8209;in. A deliberate simplification: the six commands are cheap, synchronous, and idempotent (the response never depends on prior state), so re&#8209;running them more often than strictly necessary is harmless and avoided building one&#8209;time&#8209;at&#8209;probe hook infrastructure.</p>
-
-      <p>Module rebuilt, reinstalled, <code>modprobe -r snd_usb_audio &amp;&amp; modprobe snd_usb_audio</code>. Card re&#8209;enumerated identically as <code>card 2: DDJSZ</code>. Capture retested with the same procedure, this time with a live person talking continuously for the full window:</p>
-
-      <div class="table-wrap">
-        <table>
-          <caption>Capture retest &middot; per&#8209;channel signal, mic active</caption>
-          <thead>
-            <tr><th>Channel</th><th class="num">RMS</th><th class="num">Peak</th><th>Note</th></tr>
-          </thead>
-          <tbody>
-            <tr><td>0&ndash;3</td><td class="num">~46</td><td class="num">~220&ndash;250</td><td>noise floor</td></tr>
-            <tr><td>4&ndash;7</td><td class="num">~185</td><td class="num">~800&ndash;880</td><td>unmapped, elevated</td></tr>
-            <tr><td class="hi">8</td><td class="num hi">1608.5</td><td class="num hi">7543</td><td class="hi">Mic &mdash; confirmed</td></tr>
-            <tr><td class="hi">9</td><td class="num hi">1608.5</td><td class="num hi">7543</td><td class="hi">Mic &mdash; confirmed</td></tr>
-          </tbody>
-        </table>
-      </div>
-
-      <p>Channels 8/9 show RMS roughly <strong>8.7&times;</strong> higher and peak roughly <strong>8.6&ndash;9.4&times;</strong> higher than the low&#8209;numbered channels &mdash; exactly the signature of a live voice signal landing precisely where the original Windows capture said it should, appearing only after the arm sequence was added. Beforehand, an otherwise&#8209;identical test produced a hard, uniform zero. <code>dmesg</code> showed no errors throughout.</p>
-
-      <div class="callout">
-        <div class="callout-label">Result</div>
-        <p>Both playback and capture confirmed working end&#8209;to&#8209;end with real signal, using ~125 total lines of quirk&#8209;table data and activation code layered on the existing in&#8209;tree driver.</p>
-      </div>
-    </section>
-
-    <section class="entry" id="open">
-      <div class="entry-head"><span class="entry-num">10</span><h2>Open items</h2></div>
-      <ul>
-        <li><strong>Channels 2&ndash;7</strong> remain unmapped to specific physical ins/outs (phono/line returns, USB monitor sends). Not required for basic Master + Mic use; would need a dedicated capture with a distinct known signal fed into each physical input, analyzed the same way channels 0/1 and 8/9 were.</li>
-        <li><strong>Mixxx integration</strong> &mdash; package installed (2.5.0), but pointing its Sound Hardware preferences at the device and confirming the existing MIDI mapping still operates through Mixxx itself (versus raw ALSA, which is what's been tested) needs GUI interaction and physical hardware &mdash; left as a manual follow&#8209;up.</li>
-        <li><strong>Simultaneous playback+capture</strong> hasn't been tested. Given the implicit&#8209;feedback auto&#8209;detection noted in &sect;7, this is the first thing to check if running both together produces drift, stutter, or xruns &mdash; the fix would be adding <code>USB_ENDPOINT_USAGE_IMPLICIT_FB</code> explicitly to the capture endpoint.</li>
-        <li><strong>Upstreaming</strong> &mdash; close enough in pattern to the already&#8209;merged DJM&#8209;750/850/DDJ&#8209;SX3 quirks to be a reasonable <code>alsa-devel</code> submission candidate. Not done as part of this pass.</li>
-      </ul>
-    </section>
-
-    <section class="entry" id="appendix">
-      <div class="entry-head"><span class="entry-num">&sect;</span><h2>File locations</h2></div>
-      <div class="table-wrap">
-        <table>
-          <tbody>
-            <tr><td>Patched kernel source</td><td>~/projects/ddj-sz-kernel &middot; rpi-6.18.y @ 3152f2d6d</td></tr>
-            <tr><td>Built/installed module</td><td>/lib/modules/6.18.34+rpt-rpi-2712/kernel/sound/usb/snd-usb-audio.ko</td></tr>
-            <tr><td>Stock module backup</td><td>/root/ddj-sz-backup/snd-usb-audio.ko.xz</td></tr>
-            <tr><td>Original handoff docs</td><td>~/Downloads/ddj-sz-handoff.md, ddj-sz-alsa-quirk.md</td></tr>
-            <tr><td>Original USB capture</td><td>~/Downloads/ddjdz.pcapng</td></tr>
-          </tbody>
-        </table>
-      </div>
-    </section>
-
-  </main>
-</div>
-
-<footer>
-  <div class="inner">
-    <span>DDJ&#8209;SZ field notes</span>
-    <span>snd&#8209;usb&#8209;audio quirk &middot; 08e4:0191</span>
-  </div>
-</footer>
+<h1 id="pioneer-ddj-sz-linux-audio-support-project-writeup">Pioneer
+DDJ-SZ Linux Audio Support — Project Writeup</h1>
+<p><strong>Target:</strong> Raspberry Pi 5, Raspberry Pi OS (Debian 13
+“trixie”), kernel <code>6.18.34+rpt-rpi-2712</code>
+<strong>Result:</strong> Full-duplex USB audio (10-channel playback +
+10-channel capture, S24_3LE @ 44.1kHz) working via a ~90-line patch to
+the existing in-tree <code>snd-usb-audio</code> kernel module. No new
+driver, no DKMS, no out-of-tree module framework.
+<strong>Status:</strong> Playback and capture both verified working with
+real signal. MIDI/control-surface mapping untouched (separate
+class-compliant interface, was already working, out of scope).</p>
+<blockquote>
+<p><strong>Read this first (updated 2026-09-03).</strong> This document
+is a running research log, and several conclusions in the later sections
+were later proved wrong — notably that the arm sequence broke master
+output, that playback channels 0/1 were “Master L/R”, and that channel
+bleed pointed to a hardware fault. Each is marked inline where it
+appears. The corrected, current picture lives in the <a
+href="../README.md">README</a> channel map and in <a
+href="CUE-INVESTIGATION.md">CUE-INVESTIGATION.md</a>; where they
+disagree with this log, they win.</p>
+</blockquote>
+<hr />
+<h2 id="why-this-is-a-quirk-not-a-driver">1. Why this is a “quirk,” not
+a driver</h2>
+<p>This is the part most likely to be misunderstood by anyone new to
+Linux USB audio, so it’s worth being explicit.</p>
+<p>Linux already ships a generic USB Audio Class (UAC) driver:
+<code>snd-usb-audio</code> (<code>sound/usb/</code>). Any USB audio
+device that implements the standard USB Audio Class 1.0 or 2.0
+descriptors works with this driver automatically, with zero
+device-specific code — the driver reads the device’s own descriptors at
+enumeration time and configures itself. This is why, e.g., a generic USB
+headset or a class-compliant audio interface “just works” on Linux with
+no drivers to install.</p>
+<p>The DDJ-SZ (and most higher-end Pioneer DJ mixers/controllers) does
+<strong>not</strong> implement UAC on its audio interface. Instead, its
+audio interface identifies as USB class <code>0xFF</code>
+(“vendor-specific”), meaning the OS cannot infer anything about it from
+standard descriptors — channel count, sample format, activation
+sequence, all of it is undocumented and vendor-proprietary. On
+Windows/Mac, Pioneer ships a real vendor driver that hard-codes this
+knowledge.</p>
+<p>On Linux, <code>snd-usb-audio</code> has a <strong>quirks
+system</strong> (<code>sound/usb/quirks.c</code> +
+<code>sound/usb/quirks-table.h</code>) specifically for this situation:
+a table, keyed by USB vendor:product ID, that manually supplies the
+information the driver would normally read from standard descriptors —
+endpoint numbers, channel count, sample format, sample rate, and (if the
+device needs one) a device-specific “activation” callback to run before
+streaming will work. This is not a new driver; it’s a data-table entry
+plus, at most, a small function, inside the driver that already exists
+and already handles everything else (URB submission, PCM buffer
+management, ALSA device registration, etc.). Many devices from the same
+class of “prosumer proprietary USB audio” hardware are already supported
+this way — the DDJ-SZ patch here uses the exact same mechanism already
+used for the Pioneer DJM-750, DJM-850, DJM-900NXS2, DJM-450, DJM-V10,
+DDJ-SX3, DDJ-RB, and others (<code>sound/usb/quirks-table.h</code>,
+<code>sound/usb/quirks.c</code>).</p>
+<p>Concretely, this project added: - One ~49-line entry to
+<code>quirks-table.h</code>: a static struct describing “USB ID
+08e4:0191 has 10-channel S24_3LE 44.1kHz-fixed audio on interface 0
+altsetting 1, playback on endpoint 0x01, capture on endpoint 0x82.” -
+One new <code>case</code> in an existing <code>switch</code> statement
+in <code>quirks.c</code>, wiring the DDJ-SZ’s USB ID to a
+device-specific activation function (itself only ~38 new lines,
+described in §5).</p>
+<p>No new kernel module, no new subsystem, no new files.
+<code>snd-usb-audio.ko</code> is rebuilt with these ~87 extra lines and
+replaces the stock one.</p>
+<hr />
+<h2
+id="reverse-engineering-the-protocol-usb-capture-with-wiresharkusbpcap">2.
+Reverse-engineering the protocol: USB capture with
+Wireshark/USBPcap</h2>
+<p>Since the DDJ-SZ’s audio interface is vendor-specific, there is no
+public spec for how to talk to it. The only way to learn the protocol
+was to capture and decode what the <em>official Windows driver</em>
+actually sends the device, on the theory that whatever bytes make the
+real driver work will make any driver work.</p>
+<p><strong>Method:</strong> 1. On a Windows machine, <a
+href="https://desowin.org/usbpcap/">USBPcap</a> was installed — this is
+a Windows kernel-mode USB bus filter driver that captures raw USB
+traffic (control transfers, isochronous packets, everything) at the same
+level Wireshark captures network traffic. Wireshark was used as the
+capture UI/frontend. 2. A capture was started, then the DDJ-SZ was:
+enumerated (plugged in fresh), used for <strong>audio playback</strong>
+through Serato (Pioneer’s usual DJ software pairing) so real music
+payload bytes would appear in the capture, and used for <strong>mic
+recording</strong> so real capture-direction payload bytes would appear
+too. 3. The resulting file (<code>ddjdz.pcapng</code>, ~91MB, ~118,000
+USB frames) was analyzed on the Linux side using <code>tshark</code>
+(Wireshark’s CLI), e.g.:
+<code>bash    tshark -r ddjdz.pcapng -Y "usb.idVendor == 0x08e4" -T fields -e frame.number -e usb.device_address -e usb.idVendor -e usb.idProduct</code>
+This immediately gave the device’s USB address within the capture
+(device address 8), which all further filters keyed off with
+<code>usb.device_address == 8</code>.</p>
+<p><strong>What the capture format looks like:</strong> USBPcap wraps
+every USB transaction in a 28-byte pseudo-header (IRP ID, status, URB
+function code, bus/device/endpoint, transfer type, direction, data
+length) followed by the actual transferred bytes. Wireshark’s USB
+dissector parses this automatically and exposes fields like
+<code>usb.setup.bRequest</code>, <code>usb.setup.wValue</code>,
+<code>usb.setup.wIndex</code>, and — for completed transfers —
+<code>CONTROL response data</code> in the verbose (<code>-V</code>)
+output. Isochronous audio payload frames appear as separate frames
+tagged with the relevant endpoint (<code>0x01</code> OUT or
+<code>0x82</code> IN) and transfer type <code>URB_ISOCH</code>.</p>
+<h3 id="a.-establishing-the-descriptor-level-facts">2a. Establishing the
+descriptor-level facts</h3>
+<p>Filtering on <code>usb.device_address == 8</code> and looking at the
+<code>GET_DESCRIPTOR</code> (<code>bRequest == 6</code>) responses
+during initial enumeration gave the device, configuration, and interface
+descriptors — confirming: - USB ID <code>08e4:0191</code> (Pioneer Corp
+vendor ID, DDJ-SZ product ID) - Interface 0 is class <code>0xFF</code>
+(vendor-specific), with alt setting 0 = idle (0 endpoints) and alt
+setting 1 = active (2 isochronous endpoints) - Endpoint
+<code>0x01</code> OUT, max packet 1024 bytes, interval 3; endpoint
+<code>0x82</code> IN, max packet 1024 bytes, interval 3</p>
+<h3
+id="b.-confirming-the-audio-format-from-actual-payload-bytes-not-just-bitrate-math">2b.
+Confirming the audio format from actual payload bytes, not just bitrate
+math</h3>
+<p>The endpoint max-packet-size alone is ambiguous about sample format:
+1024 bytes/packet at a given rate is consistent with more than one
+channel-count/bit-depth combination (a <strong>15-channel/16-bit
+hypothesis</strong> was initially plausible on paper). This was resolved
+empirically, not by guessing: isochronous data frames on endpoint
+<code>0x01</code> (playback, capturing Serato outputting known music)
+were extracted and decoded under both hypotheses (10ch/24-bit-packed
+vs. 15ch/16-bit), and the interpretation was checked for internal
+coherence — i.e., does de-interleaving under this channel count produce
+two channels (L/R) whose waveforms are correlated the way a real stereo
+mix should be, with plausible dynamic range and no garbage/noise
+artifacts from mis-alignment. The 10-channel, <code>S24_3LE</code>
+(24-bit samples packed into 3 bytes, little-endian) interpretation at a
+fixed 44.1kHz produced coherent, correlated stereo audio on
+de-interleaved channels 0/1; the 15-channel/16-bit hypothesis did not.
+This ruled out the ambiguity and confirmed: <strong>10 channels,
+S24_3LE, fixed 44.1kHz, both directions.</strong></p>
+<p>Channel mapping was established the same empirical way: channels 0/1
+(playback) correlated with the Master output content being played in
+Serato → <strong>Master L/R</strong>. Channels 8/9 (capture) correlated
+with spoken audio during a mic-recording test in the capture →
+<strong>Mic</strong>. Channels 2–7 (both directions) were
+<strong>not</strong> mapped to specific physical ins/outs — no
+per-channel isolation test was done for those in the original Windows
+capture, so they remain unknown/unconfirmed. This is a documented open
+item, not a blocker for basic bring-up.</p>
+<blockquote>
+<p><strong>Superseded 2026-09-03.</strong> The “Master L/R” conclusion
+above was wrong, and the unknowns are now resolved for playback.
+Playback channels 0/1 do not carry a master mix — they feed the unit’s
+<em>physical channel strip 1</em>, which then applies its own analog
+trim/EQ/fader/crossfader. It only looked like “Master” because a single
+deck was playing at the time, so strip 1’s output was the whole mix. The
+full playback map, established by feeding a tone into each pair and
+watching which strip responded, is: 0/1 → strip 1, 2/3 → strip 2, 4/5 →
+strip 3, 6/7 → strip 4, 8/9 → booth output. Master is produced in analog
+by the onboard mixer and never crosses USB at all. Capture 8/9 = mic
+still holds; capture 0-7 remain unidentified. See the README’s channel
+map and <a href="CUE-INVESTIGATION.md">CUE-INVESTIGATION.md</a>.</p>
+</blockquote>
+<h3 id="c.-finding-the-activation-control-transfers">2c. Finding the
+activation control transfers</h3>
+<p>Filtering for control transfers
+(<code>usb.transfer_type == 0x02</code>) on the device address, in time
+order, showed a control transfer immediately preceding the point where
+isochronous streaming actually starts flowing:</p>
+<pre><code>bmRequestType=0x22, bRequest=0x01 (SET_CUR), wValue=0x0100 (Sampling Freq Control),
+wIndex=0x0082, wLength=3, data = 44 ac 00 (little-endian 44100)</code></pre>
+<p><code>0x22</code> = UAC-style <code>SET_CUR</code> class request,
+endpoint recipient — this is a standard-shaped Audio Class request even
+though the interface itself is vendor-specific (Pioneer reuses the UAC
+request shape for this one control). This exact request shape
+(<code>SET_INTERFACE</code> to alt-setting 1, then this
+<code>SET_CUR</code>) turned out to be <strong>structurally
+identical</strong> to an existing function already in mainline Linux,
+<code>pioneer_djm_set_format_quirk()</code> in
+<code>sound/usb/quirks.c</code>, used for the
+DJM-750/850/900NXS2/450/V10. Those devices just call it with a different
+<code>wIndex</code> (their own captured endpoint number) — for the
+DDJ-SZ, the literal captured <code>wIndex</code> is <code>0x0082</code>,
+which is <strong>not a guess or a copy from the DJM example</strong>
+(which uses <code>0x0086</code> or <code>0x0082</code> depending on
+model) — it is read directly off this device’s own capture.</p>
+<p>This single finding is what made the “no new driver needed” approach
+viable at all: the DDJ-SZ’s activation handshake reuses infrastructure
+that already exists, it just needed to be wired up for this device’s own
+ID and endpoint index.</p>
+<hr />
+<h2 id="kernel-build-environment-setup">3. Kernel build environment
+setup</h2>
+<p>The Pi runs Raspberry Pi OS “trixie” (Debian 13), which — notably,
+and differently from older Raspberry Pi OS releases the original handoff
+doc assumed — ships kernel headers as proper Debian-style packages
+(<code>linux-headers-6.18.34+rpt-rpi-2712</code>, etc.) that are
+pre-matched to the running kernel, including a working
+<code>Module.symvers</code> for that exact build, and a
+<code>/lib/modules/$(uname -r)/build</code> symlink already pointing at
+them. This meant several steps assumed necessary in the original handoff
+(installing <code>raspberrypi-kernel-headers</code>, manually verifying
+which legacy branch matched) were unnecessary or worked differently than
+expected — see §6 for where this caused a real problem.</p>
+<p>However, those header packages only ship enough to build
+<strong>external</strong> (out-of-tree) modules — they do
+<strong>not</strong> include the actual source of in-tree drivers like
+<code>sound/usb/*.c</code>. To edit and rebuild <code>sound/usb</code>,
+the actual kernel source tree was needed, matched to the exact running
+version.</p>
+<p>Steps taken: 1. <code>uname -r</code> →
+<code>6.18.34+rpt-rpi-2712</code> 2. Identified the matching upstream
+source branch by listing branches on the <code>raspberrypi/linux</code>
+GitHub repo (<code>git ls-remote --heads</code>) and finding
+<code>rpi-6.18.y</code> (branch names follow
+<code>rpi-&lt;major&gt;.&lt;minor&gt;.y</code>, not the full point
+release). 3.
+<code>git clone --depth=1 --branch rpi-6.18.y https://github.com/raspberrypi/linux.git</code>
+— shallow clone for speed (only need the tip initially). 4. Installed
+missing build dependencies:
+<code>bc bison flex libssl-dev libncurses-dev</code> (the running system
+had none of these pre-installed). 5. Extracted the <strong>running
+kernel’s actual config</strong>:
+<code>sudo modprobe configs &amp;&amp; zcat /proc/config.gz &gt; .config</code>
+(the <code>configs</code> kernel module has to be loaded first —
+<code>/proc/config.gz</code> doesn’t exist until then). 6.
+<code>make olddefconfig</code> to reconcile that config against this
+source tree’s current <code>Kconfig</code> options.</p>
+<hr />
+<h2 id="applying-and-building-the-quirk">4. Applying and building the
+quirk</h2>
+<p>The two edits were applied exactly as designed:</p>
+<p><strong><code>sound/usb/quirks-table.h</code></strong> — new entry
+inserted immediately after the existing DJM-750 entry (found via
+<code>grep -n "0x08e4, 0x017f"</code> as the anchor), following the same
+<code>QUIRK_DRIVER_INFO</code> / <code>QUIRK_DATA_COMPOSITE</code> /
+<code>QUIRK_DATA_AUDIOFORMAT</code> structure used by every other entry
+in the table — two <code>QUIRK_DATA_AUDIOFORMAT</code> blocks (one for
+the OUT endpoint, one for the IN endpoint), each declaring 10 channels,
+<code>SNDRV_PCM_FMTBIT_S24_3LE</code>, interface 0, altsetting 1, fixed
+44100 rate.</p>
+<p><strong><code>sound/usb/quirks.c</code></strong> — a new
+<code>case USB_ID(0x08e4, 0x0191):</code> added to the existing
+<code>switch</code> inside <code>snd_usb_set_format_quirk()</code>, next
+to the DJM-750/850 cases, calling
+<code>pioneer_djm_set_format_quirk(subs, 0x0082)</code> (later extended
+— see §5).</p>
+<p>Build (module-only, not a full kernel rebuild):</p>
+<div class="sourceCode" id="cb2"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="va">ARCH</span><span class="op">=</span>arm64 <span class="va">LOCALVERSION</span><span class="op">=</span> <span class="fu">make</span> <span class="at">-j</span><span class="va">$(</span><span class="fu">nproc</span><span class="va">)</span> modules_prepare</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="va">ARCH</span><span class="op">=</span>arm64 <span class="va">LOCALVERSION</span><span class="op">=</span> <span class="fu">make</span> <span class="at">-j</span><span class="va">$(</span><span class="fu">nproc</span><span class="va">)</span> M=sound/usb</span></code></pre></div>
+<p>Output: <code>sound/usb/snd-usb-audio.ko</code>, confirmed via
+<code>modinfo</code> to carry the new <code>usb:v08E4p0191...</code>
+device-ID alias.</p>
+<hr />
+<h2
+id="debugging-round-1-version-string-mismatch-module-wouldnt-have-loaded">5.
+Debugging round 1: version-string mismatch (module wouldn’t have
+loaded)</h2>
+<p>The first successful build had a subtle but fatal problem:
+<code>modinfo</code> showed
+<code>vermagic: 6.18.45-v8-16k+ SMP preempt mod_unload modversions aarch64</code>
+— but the running kernel is <code>6.18.34+rpt-rpi-2712</code>. The Linux
+module loader refuses to load a module whose vermagic string doesn’t
+exactly match <code>uname -r</code>, so this module would have been
+rejected at <code>insmod</code> time.</p>
+<p>Two separate problems, diagnosed and fixed independently:</p>
+<ol type="1">
+<li><p><strong>Wrong source commit.</strong> The shallow clone’s branch
+tip (<code>rpi-6.18.y</code> HEAD) had already moved on to
+<code>6.18.45</code> — a newer point release than what’s actually
+installed. This was fixed by deepening the shallow clone
+(<code>git fetch --deepen=N</code>, done incrementally: 100, then
+another 150 commits, until the range of <code>SUBLEVEL</code> values in
+<code>Makefile</code> across history spanned past 34) and then scripting
+a search across all fetched commits for the one where
+<code>Makefile</code> read
+<code>VERSION = 6 / PATCHLEVEL = 18 / SUBLEVEL = 34</code>, taking the
+most recent (first, since <code>git log</code> is newest-first) such
+commit — i.e. the last commit before the branch moved on to
+<code>.35</code>. The working-tree edits were <code>git stash</code>ed,
+the tree was checked out to that exact commit, and the stash was popped
+back on top (auto-merged cleanly).</p></li>
+<li><p><strong>Missing/incorrect local version suffix.</strong> Even at
+the right base version, the built release string was
+<code>6.18.34-v8-16k+</code>, not <code>6.18.34+rpt-rpi-2712</code>. The
+<code>-v8-16k</code> piece came from <code>CONFIG_LOCALVERSION</code>
+baked into the config pulled from <code>/proc/config.gz</code> —
+apparently the raw upstream RPi Kconfig default, with the final
+<code>+rpt-rpi-2712</code> packaging suffix applied separately by
+Raspberry Pi Foundation’s build/package scripts rather than stored
+in-tree. This was fixed by directly editing <code>.config</code>
+(<code>CONFIG_LOCALVERSION="+rpt-rpi-2712"</code>) to match. That still
+left a trailing <code>+</code> (kernel’s
+<code>scripts/setlocalversion</code> appends <code>+</code> whenever the
+git tree has uncommitted changes and <code>LOCALVERSION</code> isn’t
+explicitly set on the command line, which it wasn’t in the reconciled
+build — and this tree <em>did</em> have uncommitted changes, namely our
+own two quirk edits). Fixed by passing <code>LOCALVERSION=</code>
+(empty, but explicitly set) on the <code>make</code> command line for
+every subsequent build, which per <code>scripts/setlocalversion</code>’s
+own logic suppresses the dirty-tree <code>+</code> suffix
+entirely.</p></li>
+</ol>
+<p>Final, correct vermagic after both fixes:
+<code>6.18.34+rpt-rpi-2712 SMP preempt mod_unload modversions aarch64</code>
+— exact match.</p>
+<hr />
+<h2 id="installation">6. Installation</h2>
+<ul>
+<li>Stock module was <code>sound/usb/snd-usb-audio.ko.xz</code> (Debian
+ships kernel modules <code>xz</code>-compressed) at
+<code>/lib/modules/6.18.34+rpt-rpi-2712/kernel/sound/usb/</code>.</li>
+<li>Verified before touching anything that <code>snd_usb_audio</code>
+was <strong>not currently loaded</strong> (<code>lsmod</code>) and no
+USB audio device was in use (<code>lsusb</code> showed no Pioneer device
+connected yet, and the only active <code>/dev/snd/*</code> users were
+HDMI-related pipewire/wireplumber) — so replacing it carried no risk of
+disrupting an active audio session.</li>
+<li>Backed up the original compressed module to
+<code>/root/ddj-sz-backup/snd-usb-audio.ko.xz</code> for rollback.</li>
+<li>Removed the stock <code>.ko.xz</code>, copied in the freshly built
+uncompressed <code>.ko</code>, ran <code>depmod -a</code> to refresh the
+module dependency database, then <code>modprobe snd_usb_audio</code> to
+load it.</li>
+<li>Confirmed clean load: <code>dmesg</code> showed only the expected
+“loading out-of-tree module taints kernel” notice (expected/harmless —
+any module built outside the distro’s official build pipeline sets this
+taint flag) and
+<code>usbcore: registered new interface driver snd-usb-audio</code>, no
+probe errors.</li>
+</ul>
+<p>This installation is <strong>persistent across reboots</strong>
+as-is, since the file was replaced in place under
+<code>/lib/modules/</code> and <code>depmod</code> was refreshed — it
+will be picked up automatically on every boot. It will only revert to
+stock if a future
+<code>raspberrypi-kernel</code>/<code>linux-image</code> package update
+reinstalls the kernel/modules package, at which point the build in
+<code>~/projects/ddj-sz-kernel</code> can simply be rebuilt and
+reinstalled the same way (assuming the new kernel version is close
+enough that the same source still applies — a large kernel version jump
+might need re-cloning the matching branch).</p>
+<hr />
+<h2 id="testing-round-1-playback-confirmed-capture-silently-broken">7.
+Testing round 1: playback confirmed, capture silently broken</h2>
+<p>With the DDJ-SZ plugged in: - <code>lsusb</code> showed
+<code>08e4:0191 Pioneer Corp. DDJ-SZ</code> enumerated. -
+<code>dmesg</code> showed clean enumeration, no probe errors. -
+<code>aplay -l</code> / <code>arecord -l</code> both listed a new card:
+<code>card 2: DDJSZ [DDJ-SZ], device 0: USB Audio [USB Audio]</code>. -
+<code>/proc/asound/card2/stream0</code> confirmed the driver’s own view
+of the format matched exactly what was designed: 10 channels,
+<code>S24_3LE</code>, 44100Hz, correct endpoints, both directions listed
+with <code>Status: Stop</code> (idle, correctly not yet streaming).</p>
+<p><strong>Playback test:</strong></p>
+<div class="sourceCode" id="cb3"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="ex">speaker-test</span> <span class="at">-D</span> hw:2,0 <span class="at">-c</span> 10 <span class="at">-r</span> 44100 <span class="at">-F</span> S24_3LE <span class="at">-l</span> 1</span></code></pre></div>
+<p>(Note: <code>speaker-test</code>’s default <code>-t wav</code> mode
+is hardcoded to 48kHz/S16_LE regardless of
+<code>-F</code>/<code>-r</code> flags and fails <code>hwparams</code>
+against this fixed-format device — had to drop <code>-t wav</code> and
+use the default sine/pink-noise generator instead, which does respect
+the requested format.) This opened the stream successfully
+(<code>Rate set to 44100Hz</code>,
+<code>Stream parameters are 44100Hz, S24_3LE, 10 channels</code>), ran a
+full pink-noise sweep across all 10 channels with no xruns or errors in
+<code>dmesg</code>, and <strong>was independently confirmed
+audible</strong> — real sound heard out of the DDJ-SZ Master output
+during the test.</p>
+<p><strong>Capture test — first attempt, misleading initial
+run:</strong></p>
+<div class="sourceCode" id="cb4"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="fu">arecord</span> <span class="at">-D</span> hw:2,0 <span class="at">-c</span> 10 <span class="at">-f</span> S24_3LE <span class="at">-r</span> 44100 test.wav</span></code></pre></div>
+<p>This ran without any ALSA/USB error and produced a correctly-sized
+WAV file. But analysis of the actual sample data (a small Python script
+computing per-channel RMS and peak from the raw 24-bit packed samples,
+since no <code>sox</code> was installed) showed <strong>every single
+sample on every one of the 10 channels was exactly zero</strong> — not
+just quiet, a hard zero, for the entire recording. This is more
+diagnostic than it might look: normal analog noise floor almost never
+reads as an exact zero for an entire capture; a true unbroken zero
+strongly suggests the ADC/capture data path isn’t actually delivering
+real samples at all, as opposed to “there’s just nothing to hear.”</p>
+<p>The first run didn’t definitively rule out user/procedural error
+(nobody was confirmed to actually be talking into the mic during that
+exact window, and the mic’s physical gain/on-off state on the hardware
+wasn’t verified). This was explicitly re-tested a second time, this time
+coordinating the exact recording window with a live person talking into
+the mic and confirming the hardware mic gain was up — and the result was
+still a hard, uniform zero across all channels. This ruled out user
+error and confirmed a real capture-path defect.</p>
+<p>Notably, <code>/proc/asound/card2/stream0</code> also showed, only
+for the playback stream, <code>Implicit Feedback Mode: Yes</code>, with
+endpoint <code>0x82</code> (the capture endpoint) listed as the sync
+source — <strong>even though the quirk table entry deliberately did not
+set the <code>USB_ENDPOINT_USAGE_IMPLICIT_FB</code> flag</strong> (per
+the reasoning documented in the original handoff: the SZ has genuinely
+separate, independently-addressed IN/OUT endpoints and likely doesn’t
+need one endpoint borrowing the other for clock sync, unlike some
+devices that only have one isoc pair doing double duty). ALSA’s generic
+USB-audio code auto-detects and enables implicit feedback for an async
+OUT endpoint lacking an explicit sync endpoint, by matching a nearby IN
+endpoint on the same interface/altsetting — this happened automatically
+without the flag being set. This was not the cause of the zeroed capture
+data (capture was tested standalone, with no playback stream open
+concurrently, so no implicit-feedback URB contention was in play at the
+time) but is worth knowing about if playback and capture are ever run
+simultaneously later and something misbehaves.</p>
+<hr />
+<h2 id="root-causing-the-silent-capture-failure-via-the-pcap">8.
+Root-causing the silent capture failure via the pcap</h2>
+<p>The original handoff document had already flagged, as its documented
+contingency plan, that a block of <strong>vendor status-query control
+transfers</strong> was observed preceding the <code>SET_CUR</code> in
+the original Windows capture — repeated
+<code>bmRequestType=0x40/bRequest=3</code> writes and
+<code>bmRequestType=0xc0/bRequest=0</code> reads, described only in
+paraphrase (<code>returning 00 04 04 04 04 04</code>) without exact
+<code>wValue</code>/<code>wIndex</code> values, with an open question of
+whether they were actually required for streaming or just incidental
+status polling by the Windows driver.</p>
+<p>With capture confirmed broken and playback confirmed working — both
+driven by the <em>same</em> <code>pioneer_djm_set_format_quirk()</code>
+activation call — the working hypothesis was that this omitted block
+specifically arms the ADC/mic path, while the DAC/playback path
+apparently doesn’t need it. Re-examining the original
+<code>ddjdz.pcapng</code> resolved this precisely:</p>
+<div class="sourceCode" id="cb5"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="ex">tshark</span> <span class="at">-r</span> ddjdz.pcapng <span class="at">-Y</span> <span class="st">&quot;usb.device_address == 8 &amp;&amp; usb.setup.bRequest == 3 &amp;&amp; usb.bmRequestType == 0x40&quot;</span> <span class="dt">\</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">-T</span> fields <span class="at">-e</span> frame.number <span class="at">-e</span> frame.time_relative <span class="at">-e</span> usb.setup.wValue <span class="at">-e</span> usb.setup.wIndex</span></code></pre></div>
+<p>This returned exactly <strong>6 matches</strong>, all clustered at
+<code>t ≈ 3.65–3.69s</code> — i.e. once, immediately after initial
+enumeration/<code>GET_DESCRIPTOR</code> traffic, and <strong>never
+repeated anywhere else</strong> in the ~118,000-frame, multi-minute
+capture (confirmed by checking the full result set, not just a sample).
+This timing pattern (once, at device bring-up, never again) is the
+signature of a one-time device-arming/initialization sequence, as
+opposed to something that would need to run before every stream
+open.</p>
+<p>Each write’s response was pulled with
+<code>tshark -Y "frame.number == N" -V</code> and reading the
+<code>CONTROL response data</code> field from the verbose dissection
+(the plain <code>-T fields</code> extraction didn’t expose this
+particular field by name, so per-frame <code>-V</code> was used
+instead):</p>
+<table>
+<thead>
+<tr class="header">
+<th>#</th>
+<th>write <code>wValue</code></th>
+<th>write <code>wIndex</code></th>
+<th>read length</th>
+<th>read response</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>1</td>
+<td><code>0x0100</code></td>
+<td><code>0x8002</code></td>
+<td>6</td>
+<td><code>00 04 04 04 04 04</code></td>
+</tr>
+<tr class="even">
+<td>2</td>
+<td><code>0x0200</code></td>
+<td><code>0x8002</code></td>
+<td>6</td>
+<td><code>00 04 04 04 04 04</code></td>
+</tr>
+<tr class="odd">
+<td>3</td>
+<td><code>0x0303</code></td>
+<td><code>0x8002</code></td>
+<td>6</td>
+<td><code>00 04 04 04 04 04</code></td>
+</tr>
+<tr class="even">
+<td>4</td>
+<td><code>0x0403</code></td>
+<td><code>0x8002</code></td>
+<td>6</td>
+<td><code>00 04 04 04 04 04</code></td>
+</tr>
+<tr class="odd">
+<td>5</td>
+<td><code>0x050a</code></td>
+<td><code>0x8002</code></td>
+<td>6</td>
+<td><code>00 04 04 04 04 04</code></td>
+</tr>
+<tr class="even">
+<td>6</td>
+<td><code>0x0000</code></td>
+<td><code>0x8003</code></td>
+<td>2</td>
+<td><code>00 00</code></td>
+</tr>
+</tbody>
+</table>
+<p>Every write shares
+<code>bmRequestType=0x40, bRequest=3, wLength=0</code> (the payload is
+entirely encoded in <code>wValue</code>/<code>wIndex</code>, no data
+stage); every read shares
+<code>bmRequestType=0xc0, bRequest=0, wValue=0x0000</code>, using the
+same <code>wIndex</code> as the write it follows. The fact that the read
+response is identical regardless of what was written suggests these
+reads are just status polling (not carrying meaningful returned data),
+but since it was genuinely unclear whether the <em>read itself</em> was
+needed to make the device process the preceding write, the full
+write+read pattern was replicated exactly rather than guessing which
+half was load-bearing.</p>
+<hr />
+<h2 id="the-fix-and-confirmation">9. The fix, and confirmation</h2>
+<p>Added a new function, <code>ddj_sz_arm_quirk()</code>, in
+<code>sound/usb/quirks.c</code>, right before
+<code>pioneer_djm_set_format_quirk()</code>:</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode c"><code class="sourceCode c"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="dt">static</span> <span class="dt">void</span> ddj_sz_arm_quirk<span class="op">(</span><span class="kw">struct</span> usb_device <span class="op">*</span>dev<span class="op">)</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>    <span class="dt">static</span> <span class="dt">const</span> <span class="kw">struct</span> <span class="op">{</span></span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>        u16 value<span class="op">;</span></span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>        u16 index<span class="op">;</span></span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>        u8 read_len<span class="op">;</span></span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span> cmds<span class="op">[]</span> <span class="op">=</span> <span class="op">{</span></span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>        <span class="op">{</span> <span class="bn">0x0100</span><span class="op">,</span> <span class="bn">0x8002</span><span class="op">,</span> <span class="dv">6</span> <span class="op">},</span></span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a>        <span class="op">{</span> <span class="bn">0x0200</span><span class="op">,</span> <span class="bn">0x8002</span><span class="op">,</span> <span class="dv">6</span> <span class="op">},</span></span>
+<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a>        <span class="op">{</span> <span class="bn">0x0303</span><span class="op">,</span> <span class="bn">0x8002</span><span class="op">,</span> <span class="dv">6</span> <span class="op">},</span></span>
+<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a>        <span class="op">{</span> <span class="bn">0x0403</span><span class="op">,</span> <span class="bn">0x8002</span><span class="op">,</span> <span class="dv">6</span> <span class="op">},</span></span>
+<span id="cb6-12"><a href="#cb6-12" aria-hidden="true" tabindex="-1"></a>        <span class="op">{</span> <span class="bn">0x050a</span><span class="op">,</span> <span class="bn">0x8002</span><span class="op">,</span> <span class="dv">6</span> <span class="op">},</span></span>
+<span id="cb6-13"><a href="#cb6-13" aria-hidden="true" tabindex="-1"></a>        <span class="op">{</span> <span class="bn">0x0000</span><span class="op">,</span> <span class="bn">0x8003</span><span class="op">,</span> <span class="dv">2</span> <span class="op">},</span></span>
+<span id="cb6-14"><a href="#cb6-14" aria-hidden="true" tabindex="-1"></a>    <span class="op">};</span></span>
+<span id="cb6-15"><a href="#cb6-15" aria-hidden="true" tabindex="-1"></a>    u8 buf<span class="op">[</span><span class="dv">6</span><span class="op">];</span></span>
+<span id="cb6-16"><a href="#cb6-16" aria-hidden="true" tabindex="-1"></a>    <span class="dt">unsigned</span> <span class="dt">int</span> i<span class="op">;</span></span>
+<span id="cb6-17"><a href="#cb6-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-18"><a href="#cb6-18" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> <span class="op">(</span>i <span class="op">=</span> <span class="dv">0</span><span class="op">;</span> i <span class="op">&lt;</span> ARRAY_SIZE<span class="op">(</span>cmds<span class="op">);</span> i<span class="op">++)</span> <span class="op">{</span></span>
+<span id="cb6-19"><a href="#cb6-19" aria-hidden="true" tabindex="-1"></a>        snd_usb_ctl_msg<span class="op">(</span>dev<span class="op">,</span> usb_sndctrlpipe<span class="op">(</span>dev<span class="op">,</span> <span class="dv">0</span><span class="op">),</span></span>
+<span id="cb6-20"><a href="#cb6-20" aria-hidden="true" tabindex="-1"></a>            <span class="dv">3</span><span class="op">,</span> <span class="bn">0x40</span><span class="op">,</span> cmds<span class="op">[</span>i<span class="op">].</span>value<span class="op">,</span> cmds<span class="op">[</span>i<span class="op">].</span>index<span class="op">,</span> NULL<span class="op">,</span> <span class="dv">0</span><span class="op">);</span></span>
+<span id="cb6-21"><a href="#cb6-21" aria-hidden="true" tabindex="-1"></a>        snd_usb_ctl_msg<span class="op">(</span>dev<span class="op">,</span> usb_rcvctrlpipe<span class="op">(</span>dev<span class="op">,</span> <span class="dv">0</span><span class="op">),</span></span>
+<span id="cb6-22"><a href="#cb6-22" aria-hidden="true" tabindex="-1"></a>            <span class="dv">0</span><span class="op">,</span> <span class="bn">0xc0</span><span class="op">,</span> <span class="bn">0x0000</span><span class="op">,</span> cmds<span class="op">[</span>i<span class="op">].</span>index<span class="op">,</span> buf<span class="op">,</span> cmds<span class="op">[</span>i<span class="op">].</span>read_len<span class="op">);</span></span>
+<span id="cb6-23"><a href="#cb6-23" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb6-24"><a href="#cb6-24" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>And updated the DDJ-SZ’s <code>case</code> in
+<code>snd_usb_set_format_quirk()</code>:</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode c"><code class="sourceCode c"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="cf">case</span> USB_ID<span class="op">(</span><span class="bn">0x08e4</span><span class="op">,</span> <span class="bn">0x0191</span><span class="op">):</span> <span class="co">/* Pioneer DDJ-SZ */</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>    ddj_sz_arm_quirk<span class="op">(</span>subs<span class="op">-&gt;</span>dev<span class="op">);</span></span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>    pioneer_djm_set_format_quirk<span class="op">(</span>subs<span class="op">,</span> <span class="bn">0x0082</span><span class="op">);</span></span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>    <span class="cf">break</span><span class="op">;</span></span></code></pre></div>
+<p>Design note: unlike the Windows driver (which ran this once, at
+enumeration), this calls the arm sequence every time
+<code>snd_usb_set_format_quirk()</code> runs — i.e. potentially on every
+stream open, not just once per device plug-in. This was a deliberate
+simplification rather than building one-time-at-probe hook
+infrastructure: the six commands are cheap, synchronous control
+transfers, and (based on the identical response regardless of prior
+state) idempotent, so re-running them on every stream open is harmless
+even though it’s more often than strictly necessary.</p>
+<p>Module rebuilt (<code>M=sound/usb</code>, same
+<code>LOCALVERSION=</code> invocation), reinstalled,
+<code>depmod -a</code>,
+<code>modprobe -r snd_usb_audio &amp;&amp; modprobe snd_usb_audio</code>.
+Card re-enumerated identically as <code>card 2: DDJSZ</code>.</p>
+<p><strong>Capture retest</strong>, same procedure as before but this
+time explicitly coordinated with a live person talking continuously into
+the mic for the full window:</p>
+<div class="sourceCode" id="cb8"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="fu">arecord</span> <span class="at">-D</span> hw:2,0 <span class="at">-c</span> 10 <span class="at">-f</span> S24_3LE <span class="at">-r</span> 44100 test3.wav</span></code></pre></div>
+<p>Per-channel RMS/peak analysis of the result:</p>
+<table>
+<thead>
+<tr class="header">
+<th>channel</th>
+<th>RMS</th>
+<th>peak</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>0–3</td>
+<td>~46</td>
+<td>~220–250</td>
+</tr>
+<tr class="even">
+<td>4–7</td>
+<td>~185</td>
+<td>~800–880</td>
+</tr>
+<tr class="odd">
+<td><strong>8</strong></td>
+<td><strong>1608.5</strong></td>
+<td><strong>7543</strong></td>
+</tr>
+<tr class="even">
+<td><strong>9</strong></td>
+<td><strong>1608.5</strong></td>
+<td><strong>7543</strong></td>
+</tr>
+</tbody>
+</table>
+<p>Channels 8/9 — the documented Mic channels — show RMS roughly
+<strong>8.7× higher</strong> and peak roughly <strong>8.6–9.4×
+higher</strong> than the low-numbered channels, and clearly distinct
+from the mid-range channels 4–7 too. This is exactly the expected
+signature of a live voice signal landing precisely where the original
+Windows-driver capture said it should, and it appeared only after the
+arm sequence was added — it was a hard, uniform zero on an
+otherwise-identical test beforehand. <code>dmesg</code> showed no errors
+throughout.</p>
+<p><strong>Result: both playback and capture are confirmed working
+end-to-end with real signal</strong>, using nothing but ~125 total lines
+of quirk-table data and activation-sequence code layered on the existing
+in-tree <code>snd-usb-audio</code> driver.</p>
+<hr />
+<h2 id="open-items-not-yet-done">10. Open items / not yet done</h2>
+<ul>
+<li><strong>Channels 2–7 routing</strong> (both directions) remain
+unmapped to specific physical ins/outs (phono/line returns, USB monitor
+sends). Not required for basic Master + Mic use in Mixxx; would need a
+dedicated capture with a distinct known signal fed into each physical
+input one at a time, re-analyzed the same way channels 0/1 and 8/9 were
+established here.</li>
+<li><strong>Mixxx integration</strong>: package is installed
+(<code>mixxx 2.5.0</code>), but pointing its Sound Hardware preferences
+at the new ALSA device and confirming the existing MIDI mapping still
+operates normally through Mixxx (as opposed to just at the raw ALSA
+level, which is what’s been tested here) requires GUI interaction and
+physically operating the hardware controls — left as a manual
+follow-up.</li>
+<li><strong>Simultaneous playback+capture</strong> hasn’t been tested
+(only one direction was exercised at a time). Given the
+implicit-feedback auto-detection noted in §7, this is the first thing to
+sanity-check if running both together ever produces drift, stutter, or
+xruns — the fix, per the original quirk-table author’s own note, would
+be adding <code>USB_ENDPOINT_USAGE_IMPLICIT_FB</code> explicitly to the
+capture endpoint’s <code>ep_attr</code> in
+<code>quirks-table.h</code>.</li>
+<li><strong>Upstreaming</strong>: this follows the same pattern as the
+already-merged DJM-750/850/DDJ-SX3 quirks closely enough that it’s a
+reasonable candidate to submit to the <code>alsa-devel</code> mailing
+list, per the original handoff’s suggestion — not done as part of this
+pass.</li>
+</ul>
+<hr />
+<h2 id="mixxx-integration-session-2026-08-24">11. Mixxx integration
+session (2026-08-24)</h2>
+<p>Follow-up pass connecting the working ALSA device (§1-10) to Mixxx
+2.5.0 as a daily-use 4-deck setup, using the “Pioneer
+DDJ-SXMOD.midi.xml” mapping (an adapted DDJ-SX mapping,
+<code>~/.mixxx/controllers/</code>, reusing the stock
+<code>/usr/share/mixxx/controllers/Pioneer-DDJ-SX-scripts.js</code>
+script under the <code>PioneerDDJSX</code> prefix).</p>
+<h3 id="fixed">Fixed</h3>
+<ul>
+<li><strong>Master output silent + headphone monitor silent at MASTER
+position</strong>: root-caused to <code>ddj_sz_arm_quirk()</code> in
+<code>sound/usb/quirks.c</code> (§7’s “vendor status-query” replay,
+added after the original handoff — see the comment there predating this
+fix). That function blindly replays 6 fixed vendor control-transfer
+pairs captured from one Windows session, on every stream open,
+regardless of the unit’s actual current physical switch/mixer state.
+Disabled the call (kept the function, commented out the call site at
+<code>quirks.c:1914</code>) and rebuilt/reloaded just
+<code>sound/usb</code>. This alone fixed Master output and MASTER-side
+headphone monitoring. Verified: ALSA-level stream was already
+<code>RUNNING</code> with no XRUNs and correct 10ch/S24_3LE/44100 params
+<em>before</em> this fix — i.e. the USB transport was never the problem,
+only whatever device-internal state that command sequence was setting.
+<ul>
+<li><strong>RETRACTED 2026-09-03 — this diagnosis was wrong.</strong>
+The arm sequence does <em>not</em> break Master output. Silent output
+was caused by double attenuation: Mixxx’s <em>Deck</em> output type
+applies its own software volume/crossfader before sending, so decks were
+faded twice (Mixxx + the DDJ-SZ’s analog mixer) and hit exact digital
+silence at the far crossfader position. See <a
+href="CUE-INVESTIGATION.md">CUE-INVESTIGATION.md</a> for the wire-level
+captures proving it. Disabling the arm sequence merely traded one broken
+thing for another: it killed mic capture entirely (verified — hard zeros
+on all 10 channels) while the real cause went unaddressed.</li>
+<li><strong>Current state:</strong> the call is
+<strong>re-enabled</strong>, and with the hardware-mixer Mixxx mapping
+in place both directions work at once — playback confirmed, and mic
+capture confirmed at avg 609204 / peak 3925597 on channels 8/9 versus a
+~150 noise floor elsewhere. Do not disable it again; it is load-bearing
+for capture.</li>
+</ul></li>
+<li><strong>Channel faders 2-4 not controlling their decks / crossfader
+muting instead of switching</strong>: not a MIDI/mapping bug — verified
+via live <code>aseqdump</code> capture that the hardware sends correct,
+distinct MIDI channels (raw ch 0-3 for faders 1-4, ch 6 for crossfader)
+exactly matching the XML’s <code>status</code>/<code>group</code> table,
+and the bundled
+<code>PioneerDDJSX.deckFaderLSB</code>/<code>crossFaderLSB</code> script
+logic is correct and unmodified from stock. Actual cause: physical
+<strong>CROSS FADER ASSIGN</strong> switches (labeled
+<code>A THRU B</code>, bottom of each channel strip, above
+<code>CH FADER START</code>) were set inconsistently across channels. A
+channel assigned to a crossfader side the physical crossfader isn’t
+currently on gets silenced regardless of its channel fader position. Fix
+was purely physical: set all four channels’ assign switches
+consistently.</li>
+<li><strong>USB (A)/(B) indicator confusion</strong>: the mixer’s
+<code>USB [A] [B]</code> buttons (top of channels 1&amp;3 and 2&amp;4
+respectively) are for selecting between the DDJ-SZ’s two rear USB-B
+ports (its 2-computer back-to-back feature — confirmed against the
+official Basic Edition manual), not a per-channel audio-source or
+crosstalk indicator. Both sides showing “A” lit (orange) and “B” dark is
+expected/correct with only one computer connected — not an error.</li>
+</ul>
+<h3 id="confirmed-working-not-a-bug">Confirmed working, not a bug</h3>
+<ul>
+<li><strong>Channel 2-4 level meters staying dark</strong> while audio
+is demonstrably present and correctly leveled (verified via
+matched-loudness A/B trim test against channel 1): meter-display-only
+quirk, not an audio-path problem. Not pursued further.</li>
+<li><strong>Per-channel TRIM</strong>: per the manual’s own setup
+procedure, TRIM starts fully counterclockwise (silent) per channel and
+must be manually brought up per channel — channels showing “no sound”
+after the crossfader-assign fix just hadn’t had TRIM raised yet.</li>
+</ul>
+<h3 id="open-not-yet-done">Open / not yet done</h3>
+<ul>
+<li><strong>Mic audible live but absent from recordings</strong>:
+<code>~/.mixxx/soundconfig.xml</code> currently defines only one input
+(<code>Microphone</code>, device channels 0-1) — but §6/§9 of this doc
+confirmed real mic audio actually lands on capture channels
+<strong>8-9</strong>, not 0-1. The mic you hear live is very likely the
+DDJ-SZ’s own analog hardware blend reaching the monitor path directly,
+independent of Mixxx; Mixxx’s software Microphone input is very likely
+reading the wrong channel pair (0-1, probably silence/deck loopback) and
+thus never captures it. Fix: in Mixxx’s Sound Hardware preferences,
+reconfigure the Microphone input to device channels 8-9 (matches
+soundconfig.xml’s <code>channel</code> attribute = the starting frame
+offset). Not yet applied/tested at end of session.</li>
+<li><del><strong>Headphone CUE monitoring silent</strong></del> —
+<strong>SOLVED 2026-09-03, and the fix suggested here was the wrong
+one.</strong> Do <em>not</em> add a <code>Headphones</code> output:
+there is no headphone channel pair to point it at. All ten playback
+channels are accounted for (four channel strips plus booth on 9-10), and
+pointing Mixxx’s Headphones output at 9-10 just dumps cue audio out the
+booth jack — which is what leaked it into the speakers. Cue monitoring
+is handled entirely inside the hardware. The actual cause of silent cue
+was double attenuation: Mixxx’s <em>Deck</em> output type applies its
+own volume and crossfader before sending, the analog mixer applies the
+physical controls again, and at the far crossfader position Mixxx sends
+digital silence, leaving the cue circuit nothing to monitor. See <a
+href="CUE-INVESTIGATION.md">CUE-INVESTIGATION.md</a>.</li>
+<li><del><strong>Crossfader dead zone</strong></del> — <strong>SOLVED
+2026-09-03; same root cause as the cue bug, not a hardware
+fault.</strong> The “Magvel fader needs calibration” hypothesis was
+wrong; the fader hardware is fine and reports its full range cleanly.
+Audio cut out near the end of travel because Mixxx was attenuating the
+deck in software <em>and</em> the analog crossfader was attenuating it
+again, so the combined curve reached silence early. Fixed by stopping
+Mixxx applying its crossfader (pin every deck’s <code>orientation</code>
+to center).</li>
+<li><del><strong>Channel 1 fader affecting a second deck’s audible
+volume</strong></del> — <strong>SOLVED 2026-09-03. Not analog crosstalk,
+and not a hardware fault.</strong> The conclusion above (“wiring fault
+inside the DDJ-SZ’s mixer section”) followed from a correct observation
+and a wrong inference. At the time, Mixxx was configured with a single
+<code>Main</code> output on channels 1-2 — and channels 1-2 are
+physically wired to <em>channel strip 1</em>. So every deck’s audio,
+already mixed together by Mixxx, arrived through strip 1 alone. Pulling
+strip 1’s fader therefore lowered everything, deck 4 included, exactly
+as observed. Nothing was leaking between channels. Fixed by giving each
+deck its own output pair so each one reaches its own strip.</li>
+</ul>
+<hr />
+<h2 id="appendix-file-locations">Appendix: file locations</h2>
+<ul>
+<li>Patched kernel source tree: <code>~/projects/ddj-sz-kernel</code>
+(git-tracked, checked out at commit <code>3152f2d6d</code> on top of
+<code>raspberrypi/linux</code> <code>rpi-6.18.y</code>, with the two
+files below modified — see <code>git diff</code> in that tree, or
+<code>DDJ-SZ-WRITEUP.md</code>’s companion diff if exported separately)
+<ul>
+<li><code>sound/usb/quirks-table.h</code></li>
+<li><code>sound/usb/quirks.c</code></li>
+</ul></li>
+<li>Built/installed module:
+<code>/lib/modules/6.18.34+rpt-rpi-2712/kernel/sound/usb/snd-usb-audio.ko</code></li>
+<li>Stock module backup:
+<code>/root/ddj-sz-backup/snd-usb-audio.ko.xz</code></li>
+<li>Original research/handoff docs:
+<code>~/Downloads/ddj-sz-handoff.md</code>,
+<code>~/Downloads/ddj-sz-alsa-quirk.md</code></li>
+<li>Original Windows USB capture:
+<code>~/Downloads/ddjdz.pcapng</code></li>
+</ul>
 </body>
 </html>
