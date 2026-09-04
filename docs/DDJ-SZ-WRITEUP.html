@@ -814,18 +814,20 @@ after the crossfader-assign fix just hadn’t had TRIM raised yet.</li>
 </ul>
 <h3 id="open-not-yet-done">Open / not yet done</h3>
 <ul>
-<li><strong>Mic audible live but absent from recordings</strong>:
-<code>~/.mixxx/soundconfig.xml</code> currently defines only one input
-(<code>Microphone</code>, device channels 0-1) — but §6/§9 of this doc
-confirmed real mic audio actually lands on capture channels
-<strong>8-9</strong>, not 0-1. The mic you hear live is very likely the
-DDJ-SZ’s own analog hardware blend reaching the monitor path directly,
-independent of Mixxx; Mixxx’s software Microphone input is very likely
-reading the wrong channel pair (0-1, probably silence/deck loopback) and
-thus never captures it. Fix: in Mixxx’s Sound Hardware preferences,
-reconfigure the Microphone input to device channels 8-9 (matches
-soundconfig.xml’s <code>channel</code> attribute = the starting frame
-offset). Not yet applied/tested at end of session.</li>
+<li><del><strong>Mic audible live but absent from
+recordings</strong></del> — <strong>SOLVED 2026-09-03.</strong> Two
+things were needed, and the diagnosis above only covered the first. (1)
+Mixxx’s Microphone input was pointed at the wrong channel pair; it must
+be set to device channels <strong>9-10</strong> in Preferences → Sound
+Hardware → Input (Mixxx numbers channels from 1, so that is ALSA capture
+channels 8-9 — the mic pair). (2) That alone still records nothing: a
+configured mic input is only mixed into the master bus, and therefore
+into recordings, while <strong>talkover is enabled</strong>. Open
+<strong>View → Show Microphone Section</strong> and hold/enable the
+<strong>Talk</strong> button while recording. Verified working. Note
+also that recording requires the main mix to be enabled (Preferences →
+Main Mix); if it has been disabled to save CPU, recordings will not
+contain anything.</li>
 <li><del><strong>Headphone CUE monitoring silent</strong></del> —
 <strong>SOLVED 2026-09-03, and the fix suggested here was the wrong
 one.</strong> Do <em>not</em> add a <code>Headphones</code> output:
