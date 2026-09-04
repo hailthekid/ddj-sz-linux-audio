@@ -1,4 +1,4 @@
-#TLDR
+# TLDR
 This makes Pioneer DJ DDJ-SZ work on your linux machine with mixxx
 
 # DDJ-SZ on Linux
